@@ -6,6 +6,7 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.UpdateElementTagsAction
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
+import de.westnordost.streetcomplete.osm.nowAsCheckDateString
 import de.westnordost.streetcomplete.quests.answerApplied
 import de.westnordost.streetcomplete.quests.answerAppliedTo
 import de.westnordost.streetcomplete.testutils.createMapData
@@ -99,11 +100,17 @@ class SidepathQuestTagEditTest {
             IsSidepathAnswer.Yes(null, "tertiary"),
             element.tags,
         )
-        assertEquals(setOf(StringMapEntryAdd("is_sidepath:of", "tertiary")), changes)
+        assertEquals(
+            setOf(
+                StringMapEntryAdd("is_sidepath:of", "tertiary"),
+                StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString()),
+            ),
+            changes,
+        )
         UpdateElementTagsAction(element, StringMapChanges(changes))
     }
 
-    @Test fun `metadata road already matching is_sidepath of produces no tag edit`() {
+    @Test fun `metadata road already matching is_sidepath of only records the survey`() {
         val element = way(
             tags = mapOf(
                 "highway" to "cycleway",
@@ -115,8 +122,11 @@ class SidepathQuestTagEditTest {
             IsSidepathAnswer.Yes(null, "residential"),
             element.tags,
         )
-        assertTrue(changes.isEmpty())
+        assertEquals(setOf(StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString())), changes)
+        UpdateElementTagsAction(element, StringMapChanges(changes))
+        // fill-only metadata heuristic is unchanged: it adds nothing here
         assertFalse(sidepathRoadMetadataAnswerProducesChanges(element.tags, null, "residential", null))
+        assertTrue(sidepathRoadSelectionProducesChanges(element.tags, null, "residential", null))
         assertTrue(sidepathAssociationTagsMatchSelection(element.tags, null, "residential", null))
     }
 

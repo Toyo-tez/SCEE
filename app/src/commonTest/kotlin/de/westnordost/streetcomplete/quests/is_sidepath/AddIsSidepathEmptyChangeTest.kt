@@ -7,6 +7,7 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.UpdateElementTag
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.updateElementTagsActionOrNull
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.Way
+import de.westnordost.streetcomplete.osm.nowAsCheckDateString
 import de.westnordost.streetcomplete.quests.answerAppliedTo
 import de.westnordost.streetcomplete.testutils.createMapData
 import de.westnordost.streetcomplete.testutils.mockPrefs3
@@ -48,14 +49,15 @@ class AddIsSidepathEmptyChangeTest {
         )
     }
 
-    @Test fun `confirming the already tagged road does not build an edit`() {
+    @Test fun `confirming the already tagged road only records the survey date`() {
         val element = way(2, listOf(3, 4), alreadyTagged)
         val changes = questType.answerAppliedTo(
             IsSidepathAnswer.Yes(ofName = null, ofHighway = "unclassified", ofRef = null),
             element.tags,
         )
-        assertTrue(changes.isEmpty())
-        assertNull(updateElementTagsActionOrNull(element, StringMapChanges(changes)))
+        // R2: never an empty edit, and never a change to the association itself
+        assertEquals(setOf(StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString())), changes)
+        assertTrue(updateElementTagsActionOrNull(element, StringMapChanges(changes)) != null)
         assertEquals(alreadyTagged, element.tags)
     }
 
@@ -78,7 +80,13 @@ class AddIsSidepathEmptyChangeTest {
             IsSidepathAnswer.Yes(ofName = null, ofHighway = "unclassified", ofRef = null),
             tags,
         )
-        assertEquals(setOf(StringMapEntryAdd("is_sidepath:of", "unclassified")), changes)
+        assertEquals(
+            setOf(
+                StringMapEntryAdd("is_sidepath:of", "unclassified"),
+                StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString()),
+            ),
+            changes,
+        )
         val action = updateElementTagsActionOrNull(element, StringMapChanges(changes))
         assertEquals(changes, action?.changes?.changes)
         assertEquals("asphalt", element.tags["surface"])

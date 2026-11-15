@@ -47,6 +47,10 @@ fun <T> SidepathChooseRoadForm(
     bottomOptionLabelRes: StringResource = Res.string.quest_is_sidepath_road_cant_say,
     /** When set, the bottom option invokes this instead of [mapAnswer] with nulls (EE+209 “No Sidepath”). */
     onBottomOptionSelected: (() -> Unit)? = null,
+    /** Optional extra "can't say" option shown before the bottom option (completion mode). */
+    cantSayOptionLabelRes: StringResource? = null,
+    onCantSayOptionSelected: (() -> Unit)? = null,
+    preferredHighway: String? = null,
     /** EE+209: block OK when the selected road would not add missing metadata. Default always true (EE+201). */
     roadSelectionProducesChanges: (ofName: String?, ofHighway: String?, ofRef: String?) -> Boolean = { _, _, _ -> true },
     mapDataSource: MapDataWithEditsSource = koinInject(),
@@ -71,7 +75,11 @@ fun <T> SidepathChooseRoadForm(
         val found = findCandidateRoads(pathGeometry, mapData)
         candidates = found
         if (selection == null && found.isNotEmpty()) {
-            val defaultRoad = selectDefaultSidepathRoadCandidate(found, roadSelectionProducesChanges)
+            val defaultRoad = selectDefaultSidepathRoadCandidate(
+                found,
+                preferredHighway,
+                roadSelectionProducesChanges,
+            )
             selection = SidepathRoadSelection.Road(defaultRoad.element.id)
         }
         loaded = true
@@ -85,6 +93,7 @@ fun <T> SidepathChooseRoadForm(
     fun selectionIsSubmittable(selected: SidepathRoadSelection?): Boolean = when (selected) {
         is SidepathRoadSelection.Road -> roadAnswerWouldChange(selected)
         SidepathRoadSelection.CantSay -> true
+        SidepathRoadSelection.CantSayWhichRoad -> onCantSayOptionSelected != null
         null -> false
     }
 
@@ -138,6 +147,7 @@ fun <T> SidepathChooseRoadForm(
                         on(Answer(mapAnswer(null, null, null)))
                     }
                 }
+                SidepathRoadSelection.CantSayWhichRoad -> onCantSayOptionSelected?.invoke()
                 null -> { /* incomplete */ }
             }
         },
@@ -147,6 +157,9 @@ fun <T> SidepathChooseRoadForm(
         } else {
             val options = buildList {
                 addAll(candidates.map { SidepathRoadSelection.Road(it.element.id) })
+                if (cantSayOptionLabelRes != null && onCantSayOptionSelected != null) {
+                    add(SidepathRoadSelection.CantSayWhichRoad)
+                }
                 add(SidepathRoadSelection.CantSay)
             }
             RadioGroup(
@@ -161,6 +174,9 @@ fun <T> SidepathChooseRoadForm(
                         }
                         SidepathRoadSelection.CantSay -> {
                             Text(stringResource(bottomOptionLabelRes))
+                        }
+                        SidepathRoadSelection.CantSayWhichRoad -> {
+                            cantSayOptionLabelRes?.let { Text(stringResource(it)) }
                         }
                     }
                 },
@@ -204,4 +220,6 @@ private sealed interface SidepathRoadSelection {
     data class Road(val elementId: Long) : SidepathRoadSelection
     @Serializable
     data object CantSay : SidepathRoadSelection
+    @Serializable
+    data object CantSayWhichRoad : SidepathRoadSelection
 }

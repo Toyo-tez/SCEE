@@ -3,6 +3,7 @@ package de.westnordost.streetcomplete.quests.is_sidepath
 import de.westnordost.streetcomplete.Prefs
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAdd
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
+import de.westnordost.streetcomplete.osm.nowAsCheckDateString
 import de.westnordost.streetcomplete.quests.answerApplied
 import de.westnordost.streetcomplete.quests.answerAppliedTo
 import de.westnordost.streetcomplete.testutils.createMapData
@@ -103,6 +104,7 @@ class AddIsSidepathTest {
             setOf(
                 StringMapEntryAdd("is_sidepath", "yes"),
                 StringMapEntryAdd("is_sidepath:of", "secondary"),
+                StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString()),
             ),
             questType.answerApplied(
                 IsSidepathAnswer.Yes(ofName = null, ofHighway = "secondary")

@@ -5,6 +5,7 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryDelete
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
+import de.westnordost.streetcomplete.osm.nowAsCheckDateString
 import de.westnordost.streetcomplete.quests.answerAppliedTo
 import de.westnordost.streetcomplete.testutils.createMapData
 import de.westnordost.streetcomplete.testutils.mockPrefs3
@@ -235,7 +236,9 @@ class AddIsSidepathRoadMetadataTest {
             IsSidepathAnswer.Yes(ofName = null, ofHighway = "residential"),
             tags,
         )
-        assertTrue(changes.isEmpty())
+        // re-confirming the unnamed road only records the survey; no association tag changes
+        assertEquals(setOf(StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString())), changes)
+        assertTrue(sidepathRoadSelectionProducesChanges(tags, ofName = null, ofHighway = "residential", ofRef = null))
         assertTrue(sidepathAssociationTagsMatchSelection(tags, ofName = null, ofHighway = "residential", ofRef = null))
     }
 
@@ -338,13 +341,16 @@ class AddIsSidepathRoadMetadataTest {
         assertEquals(setOf(StringMapEntryModify("is_sidepath:of:ref", "B 33", "B 99")), changes)
     }
 
-    @Test fun `unnamed road writes highway only`() {
+    @Test fun `unnamed road writes highway and its check date only`() {
         val changes = questType.answerAppliedTo(
             IsSidepathAnswer.Yes(ofName = null, ofHighway = "tertiary"),
             mapOf("highway" to "cycleway", "is_sidepath" to "yes"),
         )
         assertEquals(
-            setOf(StringMapEntryAdd("is_sidepath:of", "tertiary")),
+            setOf(
+                StringMapEntryAdd("is_sidepath:of", "tertiary"),
+                StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString()),
+            ),
             changes,
         )
     }
@@ -372,7 +378,13 @@ class AddIsSidepathRoadMetadataTest {
             IsSidepathAnswer.Yes(ofName = null, ofHighway = "unclassified"),
             mapOf("highway" to "path", "foot" to "yes", "is_sidepath" to "yes"),
         )
-        assertEquals(setOf(StringMapEntryAdd("is_sidepath:of", "unclassified")), changes)
+        assertEquals(
+            setOf(
+                StringMapEntryAdd("is_sidepath:of", "unclassified"),
+                StringMapEntryAdd("check_date:is_sidepath:of", nowAsCheckDateString()),
+            ),
+            changes,
+        )
     }
 
     // endregion

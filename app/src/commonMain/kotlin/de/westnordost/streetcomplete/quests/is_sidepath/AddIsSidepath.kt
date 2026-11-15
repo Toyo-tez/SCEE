@@ -89,7 +89,7 @@ class AddIsSidepath : OsmElementQuestType<IsSidepathAnswer> {
                 }
                 val ofHighway = answer.ofHighway
                 if (!ofHighway.isNullOrEmpty()) {
-                    applySidepathRoadAssociationFromSelection(
+                    applySidepathRoadSelection(
                         tags,
                         answer.ofName,
                         ofHighway,
@@ -99,6 +99,8 @@ class AddIsSidepath : OsmElementQuestType<IsSidepathAnswer> {
                     applySidepathRoadMetadata(tags, answer.ofName, answer.ofHighway, answer.ofRef)
                 }
             }
+
+            IsSidepathAnswer.CantSayWhichRoad -> applySidepathCantSayWhichRoad(tags)
 
             IsSidepathAnswer.No -> applySidepathNotSidepath(tags)
 

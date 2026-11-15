@@ -83,13 +83,27 @@ fun AddIsSidepathForm(
                 onBottomOptionSelected = if (completingExistingSidepath) {
                     { on(Answer(IsSidepathAnswer.No)) }
                 } else {
+                    { on(Answer(IsSidepathAnswer.CantSayWhichRoad)) }
+                },
+                // Completion mode: "can't say" in addition to "No Sidepath", so that a truthful
+                // answer exists when the mapper cannot tell which road the path belongs to.
+                cantSayOptionLabelRes = if (completingExistingSidepath) {
+                    Res.string.quest_is_sidepath_road_cant_say
+                } else {
                     null
                 },
+                onCantSayOptionSelected = if (completingExistingSidepath) {
+                    { on(Answer(IsSidepathAnswer.CantSayWhichRoad)) }
+                } else {
+                    null
+                },
+                preferredHighway = element.tags["is_sidepath:of"].takeIf { completingExistingSidepath },
                 roadSelectionProducesChanges = if (completingExistingSidepath) {
-                    // A road whose tags already match produces no edit. Enabling OK for that
-                    // match closed the quest without a change, or threw on an empty action.
+                    // Uses the same writer as the answer: a road whose tags already match only
+                    // records check_date:is_sidepath:of, so the truthful road stays selectable
+                    // without ever submitting an empty edit.
                     { ofName, ofHighway, ofRef ->
-                        sidepathRoadMetadataAnswerProducesChanges(
+                        sidepathRoadSelectionProducesChanges(
                             element.tags,
                             ofName,
                             ofHighway,

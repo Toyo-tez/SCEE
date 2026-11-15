@@ -6,6 +6,11 @@ import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.osm.mapdata.MapDataWithGeometry
 import de.westnordost.streetcomplete.osm.FILTER_FOOT_OR_BICYCLE_ACCESSIBLE
 import de.westnordost.streetcomplete.osm.Tags
+import de.westnordost.streetcomplete.osm.getLastCheckDateKeys
+import de.westnordost.streetcomplete.osm.toCheckDate
+import de.westnordost.streetcomplete.osm.updateCheckDateForKey
+import de.westnordost.streetcomplete.util.ktx.toLocalDate
+import kotlin.time.Instant
 
 /** Shared highway/path tag shape for eligible sidepath ways (classification + completion). */
 private const val SIDEPATH_ELIGIBLE_PATH_SHAPE = """
@@ -89,8 +94,14 @@ internal fun isSidepathRoadMetadataAssociationComplete(
 
 internal fun selectDefaultSidepathRoadCandidate(
     candidates: List<CandidateRoad>,
+    preferredHighway: String? = null,
     roadSelectionProducesChanges: (ofName: String?, ofHighway: String?, ofRef: String?) -> Boolean,
 ): CandidateRoad {
+    if (preferredHighway != null) {
+        candidates.firstOrNull {
+            it.highway == preferredHighway && roadSelectionProducesChanges(it.name, it.highway, it.ref)
+        }?.let { return it }
+    }
     return candidates.firstOrNull { roadSelectionProducesChanges(it.name, it.highway, it.ref) }
         ?: candidates.firstOrNull { it.name != null || it.ref != null }
         ?: candidates.first()
@@ -104,13 +115,14 @@ internal fun isSidepathRoadMetadataCompletionEligible(
     val tags = element.tags
     if (tags["is_sidepath"] != "yes") return false
     if (isSidepathRoadMetadataAssociationComplete(tags, geometry, mapData)) return false
-    if (!hasNearbyAlignedRoad(geometry, mapData)) return false
+    val candidates = findCandidateRoads(geometry, mapData)
     val associatedHighway = tags["is_sidepath:of"]
-    val candidates = findCandidateRoads(geometry, mapData).let { roads ->
+    val relevantCandidates = candidates.let { roads ->
         if (associatedHighway.isNullOrEmpty()) roads
         else roads.filter { it.highway == associatedHighway }
     }
-    return candidates.any { candidate ->
+    if (hasSidepathAssociationSurveyMark(tags, relevantCandidates)) return false
+    return relevantCandidates.any { candidate ->
         sidepathRoadMetadataAnswerProducesChanges(
             tags,
             candidate.name,
@@ -192,6 +204,66 @@ internal fun sidepathAssociationTagsMatchSelection(
     val nameMatches = (taggedName.isNullOrEmpty() && ofName.isNullOrEmpty()) || taggedName == ofName
     val refMatches = (taggedRef.isNullOrEmpty() && ofRef.isNullOrEmpty()) || taggedRef == ofRef
     return nameMatches && refMatches
+}
+
+/**
+ * Whether the sidepath association was surveyed and no nearby candidate road has been edited on a
+ * later date. A newer road edit can expose association information that was unavailable before.
+ */
+internal fun hasSidepathAssociationSurveyMark(
+    tags: Map<String, String>,
+    candidates: List<CandidateRoad>,
+): Boolean {
+    val checkedDates = getLastCheckDateKeys("is_sidepath:of")
+        .mapNotNull { tags[it]?.toCheckDate() }
+        .toList()
+    val lastChecked = checkedDates.maxOrNull() ?: return false
+    return candidates.none {
+        Instant.fromEpochMilliseconds(it.element.timestampEdited).toLocalDate() > lastChecked
+    }
+}
+
+/**
+ * Explicit road selection from the quest form. A road without name or ref is recorded with
+ * `check_date:is_sidepath:of`, so that a named road of the same class nearby does not re-ask.
+ */
+internal fun applySidepathRoadSelection(
+    tags: Tags,
+    ofName: String?,
+    ofHighway: String,
+    ofRef: String?,
+) {
+    if (tags["is_sidepath"] != "yes") {
+        tags["is_sidepath"] = "yes"
+    }
+    applySidepathRoadAssociationFromSelection(tags, ofName, ofHighway, ofRef)
+    if (ofName.isNullOrEmpty() && ofRef.isNullOrEmpty()) {
+        tags.updateCheckDateForKey("is_sidepath:of")
+    }
+}
+
+/** Whether choosing this road in the form would change the tags (same writer as the answer). */
+internal fun sidepathRoadSelectionProducesChanges(
+    tags: Map<String, String>,
+    ofName: String?,
+    ofHighway: String?,
+    ofRef: String?,
+): Boolean {
+    if (ofHighway.isNullOrEmpty()) return false
+    val builder = StringMapChangesBuilder(tags)
+    applySidepathRoadSelection(builder, ofName, ofHighway, ofRef)
+    return builder.hasChanges
+}
+
+/**
+ * Sidepath confirmed, road unknown: keep any existing association untouched and record the
+ * association survey with `check_date:is_sidepath:of`.
+ */
+internal fun applySidepathCantSayWhichRoad(tags: Tags) {
+    if (tags["is_sidepath"] != "yes") {
+        tags["is_sidepath"] = "yes"
+    }
+    tags.updateCheckDateForKey("is_sidepath:of")
 }
 
 /** Explicit correction: not a sidepath; same association cleanup as [AddIsSidepath] “No”. */
