@@ -84,18 +84,21 @@ class AddWaterwayCrossingTest {
         assertFalse(type.isApplicableTo(f.water)!!)
     }
 
-    @Test fun `motorway trunk and link roads can be described but never become simple fords`() {
+    @Test fun `motorway trunk and link road crossings can be answered as fords`() {
         for (highway in listOf("motorway", "trunk", "primary_link", "trunk_link", "motorway_link")) {
             val f = WaterwayCrossingTestData()
             val road = f.road.copy(tags = mapOf("highway" to highway))
             f.data.putElement(road)
-            assertEquals(road, type.getCrossings(f.data).single().road)
-            assertFailsWith<ConflictException> {
-                CreateWaterwayFordAction(f.crossing.copy(road = road)).createUpdates(f.repo, f.idProvider())
-            }
-            val changes = f.bridge.copy(crossing = f.crossing.copy(road = road)).createUpdates(f.repo, f.idProvider())
-            assertEquals("1", (changes.creations + changes.modifications).filterIsInstance<Way>()
+            val crossing = type.getCrossings(f.data).single()
+            assertEquals(road, crossing.road)
+            val bridge = f.bridge.copy(crossing = f.crossing.copy(road = road)).createUpdates(f.repo, f.idProvider())
+            assertEquals("1", (bridge.creations + bridge.modifications).filterIsInstance<Way>()
                 .single { it.tags["bridge"] == "yes" }.tags["layer"])
+            val ford = CreateWaterwayFordAction(f.crossing.copy(road = road)).createUpdates(f.repo, f.idProvider())
+            assertEquals(mapOf("ford" to "yes"), (ford.creations + ford.modifications).filterIsInstance<Node>().single().tags)
+            (ford.creations + ford.modifications).forEach { f.data.putElement(it) }
+            assertEquals(road.tags, f.data.getWay(road.id)!!.tags)
+            assertTrue(type.getCrossings(f.data).isEmpty(), highway)
         }
     }
 
@@ -130,14 +133,13 @@ class AddWaterwayCrossingTest {
         assertTrue(crossingSupportsBridgeOrCulvert(crossing.road, crossing.waterway, f.roadPositions, crossing.position))
     }
 
-    @Test fun `shared endpoint tangent major roads node tags and additional references have no answers`() {
-        for (kind in listOf("endpoint", "touch", "major", "tag", "layer", "way", "relation")) {
+    @Test fun `shared endpoint tangent tagged ways and additional references have no answers`() {
+        for (kind in listOf("endpoint", "touch", "tag", "layer", "way", "relation")) {
             val f = WaterwayCrossingTestData()
             val c = f.sharedCrossing()
             when (kind) {
                 "endpoint" -> f.data.putElement(c.waterway.copy(nodeIds = listOf(7, 6)))
                 "touch" -> f.data.putElement(node(5, p(0.001, -0.001)))
-                "major" -> f.data.putElement(c.road.copy(tags = mapOf("highway" to "primary")))
                 "tag" -> f.data.putElement(node(7, p(), tags = mapOf("barrier" to "gate")))
                 "layer" -> f.data.putElement(c.waterway.copy(tags = c.waterway.tags + ("layer" to "-1")))
                 "way" -> f.data.putElement(way(30, listOf(7, 1), mapOf("boundary" to "administrative")))
