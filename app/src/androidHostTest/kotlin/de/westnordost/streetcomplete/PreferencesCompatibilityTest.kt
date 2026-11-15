@@ -234,7 +234,7 @@ class PreferencesCompatibilityTest {
     }
 
     @Test fun `existing settings export has five typed sections but omits native sets`() {
-        val method = Class.forName("de.westnordost.streetcomplete.screens.settings.DataManagementScreenKt")
+        val method = Class.forName("de.westnordost.streetcomplete.screens.settings.SettingsImportExportKt")
             .getDeclaredMethod("settingsToString", Map::class.java).apply { isAccessible = true }
         val text = method.invoke(null, raw.all) as String
         for (type in listOf("boolean", "int", "long", "float", "string")) {
@@ -246,12 +246,23 @@ class PreferencesCompatibilityTest {
     }
 
     @Test fun `failed settings import retains values already applied before invalid section`() {
-        val method = Class.forName("de.westnordost.streetcomplete.screens.settings.DataManagementScreenKt")
-            .getDeclaredMethod("readToSettings", List::class.java, Preferences::class.java).apply { isAccessible = true }
-        val result = method.invoke(null, listOf("boolean settings", "{\"expert_mode\":false}",
-            "int settings", "{\"gps_interval\":\"not an int\"}"), prefs) as Boolean
+        val method = Class.forName("de.westnordost.streetcomplete.screens.settings.SettingsImportExportKt")
+            .getDeclaredMethod(
+                "readToSettings",
+                List::class.java,
+                Preferences::class.java,
+                Class.forName("de.westnordost.streetcomplete.screens.settings.SettingsImportPolicy"),
+            ).apply { isAccessible = true }
+        val policy = Class.forName("de.westnordost.streetcomplete.screens.settings.SettingsImportPolicy")
+            .enumConstants!!.first { it.toString() == "General" }
+        val result = method.invoke(
+            null,
+            listOf("boolean settings", "{\"expert_mode\":false}", "int settings", "{\"gps_interval\":\"not an int\"}"),
+            prefs,
+            policy,
+        ) as Boolean
         assertFalse(result)
-        assertFalse(prefs.expertMode)
+        assertTrue(prefs.expertMode)
         assertEquals(15, prefs.getInt(Prefs.LOCATION_INTERVAL, 0))
     }
 

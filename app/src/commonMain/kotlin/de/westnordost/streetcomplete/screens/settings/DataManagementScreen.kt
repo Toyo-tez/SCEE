@@ -419,33 +419,6 @@ private fun exportPresets(ids: Collection<Long>, file: PlatformFile, db: Databas
     } } }
 }
 
-// this will ignore settings with value null, but should be fine
-@Suppress("UNCHECKED_CAST") // it is checked... but whatever
-private fun settingsToString(settings: Map<String, Any?>): String {
-    val booleans = settings.filterValues { it is Boolean } as Map<String, Boolean>
-    val ints = settings.filterValues { it is Int } as Map<String, Int>
-    val longs = settings.filterValues { it is Long } as Map<String, Long>
-    val floats = settings.filterValues { it is Float } as Map<String, Float>
-    val strings = settings.filterValues { it is String } as Map<String, String>
-    // now write
-    val sb = StringBuilder()
-    sb.appendLine("boolean settings")
-    sb.appendLine( Json.encodeToString(booleans))
-    sb.appendLine()
-    sb.appendLine("int settings")
-    sb.appendLine( Json.encodeToString(ints))
-    sb.appendLine()
-    sb.appendLine("long settings")
-    sb.appendLine( Json.encodeToString(longs))
-    sb.appendLine()
-    sb.appendLine("float settings")
-    sb.appendLine( Json.encodeToString(floats))
-    sb.appendLine()
-    sb.appendLine("string settings")
-    sb.appendLine( Json.encodeToString(strings))
-    return sb.toString()
-}
-
 private fun exportCustomOverlays(indices: Collection<String>, file: PlatformFile, prefs: Preferences) {
     val filterRegex = "custom_overlay_(?:${indices.joinToString("|")})_.*".toRegex()
     val settings = prefs.all.filterKeys { filterRegex.matches(it) }.toMutableMap()
@@ -459,15 +432,7 @@ private fun exportCustomOverlays(indices: Collection<String>, file: PlatformFile
 }
 
 private fun exportSettings(file: PlatformFile, prefs: Preferences) {
-    val perPresetQuestSetting = "\\d+_qs_.+".toRegex()
-    val settings = prefs.all.filterKeys {
-        !it.contains("TangramPinsSpriteSheet") // this is huge and gets generated if missing anyway
-            && !it.contains("TangramIconsSpriteSheet") // this is huge and gets generated if missing anyway
-            && it != Preferences.OAUTH2_ACCESS_TOKEN // login
-            && !it.contains("osm.") // login data
-            && !it.matches(perPresetQuestSetting) // per-preset quest settings should be stored with presets, because preset id is never guaranteed to match
-            && !it.startsWith("custom_overlay") // custom overlays are exported separately
-    }
+    val settings = prefs.all.filterKeys { isExportableSettingsKey(it) }
     runBlocking { withContext(Dispatchers.IO) { file.sink().buffered().use { it.writeText(settingsToString(settings)) } } }
 }
 
@@ -482,7 +447,7 @@ private fun importCustomOverlays(file: PlatformFile, replaceExisting: Boolean, p
         // this is necessary because otherwise overlay may remain, but hidden due to not in indices pref
         prefs.all.keys.forEach { if (it.startsWith("custom_overlay")) prefs.remove(it) }
 
-        val result = readToSettings(lines.subList(1, lines.size), prefs)
+        val result = readToSettings(lines.subList(1, lines.size), prefs, SettingsImportPolicy.CustomOverlay)
         // update in case of old data
         if (prefs.contains("custom_overlay_filter") || prefs.contains("custom_overlay_color_key")) {
             val indices = if (prefs.contains(Prefs.CUSTOM_OVERLAY_INDICES)) getCustomOverlayIndices(prefs) else emptyList()
@@ -511,7 +476,7 @@ private fun importCustomOverlays(file: PlatformFile, replaceExisting: Boolean, p
                 "custom_overlay_${newIndex}_"
             }
         }
-        val result = readToSettings(newLines, prefs)
+        val result = readToSettings(newLines, prefs, SettingsImportPolicy.CustomOverlay)
         // update in case of old data
         if (prefs.contains("custom_overlay_filter") || prefs.contains("custom_overlay_color_key")) {
             val oldOverlayIndex = if (indices.contains(offset)) indices.max() + 1 else offset
@@ -526,26 +491,6 @@ private fun importCustomOverlays(file: PlatformFile, replaceExisting: Boolean, p
         // set updated indices
         prefs.putString(Prefs.CUSTOM_OVERLAY_INDICES, indices.sorted().joinToString(","))
         result
-    }
-}
-
-private fun readToSettings(list: List<String>, prefs: Preferences): Boolean {
-    val i = list.iterator()
-    try {
-        while (i.hasNext()) {
-            val next = i.next()
-            if (next.isBlank()) continue
-            when (next) {
-                "boolean settings" -> Json.decodeFromString<Map<String, Boolean>>(i.next()).forEach { prefs.putBoolean(it.key, it.value) }
-                "int settings" -> Json.decodeFromString<Map<String, Int>>(i.next()).forEach { prefs.putInt(it.key, it.value) }
-                "long settings" -> Json.decodeFromString<Map<String, Long>>(i.next()).forEach { prefs.putLong(it.key, it.value) }
-                "float settings" -> Json.decodeFromString<Map<String, Float>>(i.next()).forEach { prefs.putFloat(it.key, it.value) }
-                "string settings" -> Json.decodeFromString<Map<String, String>>(i.next()).forEach { prefs.putString(it.key, it.value) }
-            }
-        }
-        return true
-    } catch (e: Exception) {
-        return false
     }
 }
 
@@ -731,7 +676,7 @@ private fun importPresets(
         // set selected preset to default, because previously selected may not exist any more
         prefs.putLong(Preferences.SELECTED_EDIT_TYPE_PRESET, 0)
     }
-    readToSettings(questSettingsLines, prefs)
+    readToSettings(questSettingsLines, prefs, SettingsImportPolicy.PresetQuestSettings)
 
     visibleEditTypeController.setVisibilities(emptyMap()) // reload stuff
 }
