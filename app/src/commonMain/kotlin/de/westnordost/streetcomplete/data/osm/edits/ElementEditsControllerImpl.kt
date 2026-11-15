@@ -378,7 +378,15 @@ class ElementEditsControllerImpl(
     }
 
     private fun onAddedEdit(edit: ElementEdit, key: QuestKey?) {
-        listeners.forEach { it.onAddedEdit(edit, key) }
+        // The edit is already persisted at this point. A failing observer must neither be reported as
+        // a failed save (the user would retry and create a duplicate) nor starve the other observers.
+        listeners.forEach {
+            try {
+                it.onAddedEdit(edit, key)
+            } catch (e: Exception) {
+                Log.e(TAG, "Listener failed after edit ${edit.id} was persisted", e)
+            }
+        }
     }
 
     private fun onSyncedEdit(edit: ElementEdit, updatedEditIds: Collection<Long>) {

@@ -103,6 +103,31 @@ class ElementEditTransactionsTest : StreetCompleteDatabaseTestCase() {
         assertTrue(controller.getAll().isEmpty())
     }
 
+    @Test fun `throwing add listener does not fail the persisted add or starve other listeners`() {
+        val notified = mutableListOf<String>()
+        controller.addListener(object : ElementEditsSource.Listener {
+            override fun onAddedEdit(edit: ElementEdit) { throw IllegalStateException("listener boom") }
+            override fun onSyncedEdit(edit: ElementEdit) {}
+            override fun onDeletedEdits(edits: List<ElementEdit>) {}
+        })
+        controller.addListener(object : ElementEditsSource.Listener {
+            override fun onAddedEdit(edit: ElementEdit) { notified += "late" }
+            override fun onSyncedEdit(edit: ElementEdit) {}
+            override fun onDeletedEdits(edits: List<ElementEdit>) {}
+        })
+        addCreation() // must not report failure: the edit is already persisted
+        assertEquals(1, edits.getAll().size)
+        assertEquals(listOf("late"), notified)
+        assertEquals(1, controller.getAll().size)
+    }
+
+    @Test fun `persistence failure still propagates and leaves no edit`() {
+        db.remaining = 1
+        assertFailsWith<InjectedFailure> { addCreation() }
+        db.remaining = Int.MAX_VALUE
+        assertTrue(edits.getAll().isEmpty())
+    }
+
     private fun addCreation() = controller.add(TestElementEditType, pGeom(), "survey",
         CreateNodeAction(LatLon(1.0, 2.0), mapOf("amenity" to "bench")), true, null)
 
