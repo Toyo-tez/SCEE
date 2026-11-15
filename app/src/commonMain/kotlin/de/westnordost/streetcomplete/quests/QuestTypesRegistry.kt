@@ -7,6 +7,7 @@ import de.westnordost.streetcomplete.quests.elevator_bicycle_access.AddElevatorB
 import de.westnordost.streetcomplete.quests.water_bottle_fill.AddWaterBottleFill
 import de.westnordost.streetcomplete.quests.waterway_crossing.AddWaterwayCrossing
 import de.westnordost.streetcomplete.data.meta.CountryInfo
+import de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox
 import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.data.quest.QuestTypeRegistry
@@ -290,6 +291,8 @@ fun questTypeRegistry(
     getFeature: (Element) -> Feature?,
     osmoseDao: OsmoseDao,
     customQuestList: CustomQuestList,
+    /** codes of the regions that are guaranteed to contain the whole bounding box */
+    getContainingCountryCodes: (BoundingBox) -> Set<String> = { emptySet() },
 ) = QuestTypeRegistry({ getQuestTypeList(
     arSupportChecker,
     getCountryInfoByLocation,
@@ -297,6 +300,7 @@ fun questTypeRegistry(
     getFeature,
     osmoseDao,
     customQuestList,
+    getContainingCountryCodes,
 ) })
 
 fun getQuestTypeList(
@@ -306,6 +310,7 @@ fun getQuestTypeList(
     getFeature: (Element) -> Feature?,
     osmoseDao: OsmoseDao,
     customQuestList: CustomQuestList,
+    getContainingCountryCodes: (BoundingBox) -> Set<String> = { emptySet() },
 ): List<Pair<Int, QuestType>> = listOf(
 
     /*
@@ -649,7 +654,7 @@ fun getQuestTypeList(
     139 to AddShoulder(),
 
     140 to AddRoadWidth(arSupportChecker),
-    EE_QUEST_OFFSET + 207 to AddTrafficSignType(getCountryOrSubdivisionCode), // Germany only, disabled by default: nearly every road is a candidate
+    EE_QUEST_OFFSET + 207 to AddTrafficSignType(getCountryOrSubdivisionCode, getContainingCountryCodes), // Germany only, disabled by default: nearly every road is a candidate
     141 to AddRoadSmoothness(),
     142 to AddPathSmoothness(),
     170 to AddBarrierOpening(arSupportChecker),

@@ -914,8 +914,10 @@ Out of the box SCEE is configured to behave very similar to StreetComplete.</str
     <string name="traffic_sign_overlay_readonly_border">According to the country borders known to the app, this way lies in several countries (%1$s). Traffic signs can only be edited on ways that lie completely in one supported country. To edit them, split the way at the border.</string>
     <string name="traffic_sign_overlay_readonly_uncertain">It cannot be determined reliably that this way lies completely in one country, for example because it runs close to a border. Therefore, its traffic signs cannot be edited here.</string>
     <string name="traffic_sign_overlay_readonly_tags_title">Existing traffic sign tags</string>
-    <string name="traffic_sign_overlay_readonly_no_tags">This way has no traffic sign tags.</string>
-    <string name="traffic_sign_overlay_readonly_no_direction">No direction given</string>
+    <string name="traffic_sign_overlay_readonly_no_tags">There are no traffic sign tags.</string>
+    <string name="traffic_sign_overlay_readonly_no_direction">General (key without direction)</string>
+    <string name="traffic_sign_overlay_readonly_direction_tag">Direction, as tagged</string>
+    <string name="traffic_sign_overlay_readonly_node">Traffic signs on points are only shown here and cannot be edited in this overlay. Their tags are shown as they are.</string>
     <string name="traffic_sign_overlay_catalogue_missing">The traffic sign catalogue could not be loaded.</string>
     <string name="traffic_sign_overlay_loading">Loading traffic signs…</string>
     <string name="traffic_sign_overlay_direction_forward">Direction of the way</string>

@@ -20,6 +20,10 @@ import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.u
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWayCountry
 import de.westnordost.streetcomplete.overlays.overlaysRegistry
 import de.westnordost.streetcomplete.testutils.inMemoryPrefs
+import de.westnordost.streetcomplete.data.osm.geometry.ElementGeometry
+import de.westnordost.streetcomplete.data.osm.geometry.ElementPointGeometry
+import de.westnordost.streetcomplete.data.osm.mapdata.Element
+import de.westnordost.streetcomplete.data.osm.mapdata.Node
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.data.overlays.OverlayColor
@@ -35,6 +39,7 @@ import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWaySigns
 import de.westnordost.streetcomplete.osm.traffic_sign.deriveWayTags
 import de.westnordost.streetcomplete.osm.traffic_sign.parseDE
 import de.westnordost.streetcomplete.testutils.createMapData
+import de.westnordost.streetcomplete.testutils.node
 import de.westnordost.streetcomplete.testutils.way
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -290,6 +295,146 @@ class TrafficSignOverlayTest {
         assertEquals(emptyList(), readOnlyTrafficSignTags(mapOf("traffic_sign" to "", "traffic_sign:forward" to " ")))
         assertFalse(hasTrafficSignTags(mapOf("traffic_sign" to "", "highway" to "residential")))
         assertTrue(hasTrafficSignTags(mapOf("traffic_sign:backward" to "FR:B1")))
+    }
+
+    /* ---------------------------------------- nodes ---------------------------------------- */
+
+    private fun styledNodes(vararg nodes: Node): Map<Long, OverlayStyle> =
+        overlay.getStyledElements(createMapData(nodes.associate<Node, Element, ElementGeometry?> { it to ElementPointGeometry(it.position) }))
+            .associate { it.first.id to it.second }
+
+    @Test fun `nodes with traffic sign tags are shown read-only in every country`() {
+        for (pos in listOf(de1, at1, fr1, gb1, unknown1)) {
+            for (tag in listOf(
+                "traffic_sign" to "stop",
+                "traffic_sign" to "give_way",
+                "traffic_sign" to "GB:616",
+                "traffic_sign" to "FR:AB4",
+                "traffic_sign" to "DE:206",
+                "traffic_sign" to "city_limit",
+                "traffic_sign" to "yes",
+                "traffic_sign" to "something unreadable",
+                "traffic_sign:forward" to "GB:616",
+                "traffic_sign:backward" to "GB:616",
+            )) {
+                assertEquals(mapOf(1L to trafficSignNodeStyle), styledNodes(node(1, pos, mapOf(tag))), "$tag $pos")
+            }
+        }
+    }
+
+    @Test fun `nodes without traffic sign tags are not shown`() {
+        assertEquals(
+            emptyMap(),
+            styledNodes(
+                node(1, gb1),
+                node(2, gb1, mapOf("highway" to "stop")),
+                node(3, gb1, mapOf("traffic_sign" to " ")),
+                node(4, gb1, mapOf("direction" to "forward")),
+                node(5, gb1, mapOf("traffic_sign:direction" to "forward")),
+                node(6, gb1, mapOf("highway" to "give_way", "direction" to "backward")),
+            )
+        )
+    }
+
+    @Test fun `nodes whose traffic sign tags are only none or no are not shown`() {
+        assertEquals(
+            emptyMap(),
+            styledNodes(
+                node(1, gb1, mapOf("traffic_sign" to "none")),
+                node(2, gb1, mapOf("traffic_sign" to "no")),
+                node(3, de1, mapOf("traffic_sign" to "none", "traffic_sign:forward" to "no")),
+                node(4, gb1, mapOf("traffic_sign:backward" to " NONE ")),
+            )
+        )
+    }
+
+    @Test fun `nodes with none or no and another sign value stay shown`() {
+        val shown = mapOf(1L to trafficSignNodeStyle, 2L to trafficSignNodeStyle, 3L to trafficSignNodeStyle)
+        assertEquals(
+            shown,
+            styledNodes(
+                node(1, gb1, mapOf("traffic_sign" to "none", "traffic_sign:forward" to "GB:616")),
+                node(2, de1, mapOf("traffic_sign" to "no", "traffic_sign:backward" to "DE:206")),
+                node(3, gb1, mapOf("traffic_sign:forward" to "none", "traffic_sign:backward" to "yes")),
+            )
+        )
+    }
+
+    @Test fun `nodes with yes, unknown or uninterpretable values stay shown`() {
+        assertEquals(
+            (1L..4L).associateWith { trafficSignNodeStyle },
+            styledNodes(
+                node(1, gb1, mapOf("traffic_sign" to "yes")),
+                node(2, gb1, mapOf("traffic_sign" to "something odd")),
+                node(3, de1, mapOf("traffic_sign" to "none;DE:206")),
+                node(4, gb1, mapOf("traffic_sign" to "maxspeed")),
+            )
+        )
+    }
+
+    @Test fun `node style is a point that can not be mistaken for a way survey state`() {
+        assertTrue(trafficSignNodeStyle.icon != null)
+        assertEquals(null, trafficSignNodeStyle.label)
+        assertEquals(null, trafficSignNodeStyle.color)
+        assertFalse(trafficSignNodeStyle.disabled)
+    }
+
+    @Test fun `nodes do not change how ways in Germany are shown`() {
+        val signNode = node(10, de1, mapOf("traffic_sign" to "DE:206", "highway" to "stop"))
+        val data = createMapData(mapOf(
+            way(1, tags = mapOf(road)) to line(de1, de2),
+            way(2, tags = mapOf(road, "traffic_sign:forward" to "DE:250", "traffic_sign:backward" to "none")) to line(de1, de2),
+            signNode to ElementPointGeometry(de1),
+            node(11, de2) to ElementPointGeometry(de2),
+        ))
+        val styles = overlay.getStyledElements(data).associate { it.first.id to it.second }
+        assertEquals(
+            mapOf(
+                1L to trafficSignWayStyle(mapOf(road)),
+                2L to trafficSignWayStyle(mapOf(road, "traffic_sign:forward" to "DE:250", "traffic_sign:backward" to "none")),
+                10L to trafficSignNodeStyle,
+            ),
+            styles
+        )
+    }
+
+    @Test fun `nodes and ways are both shown in Great Britain`() {
+        val data = createMapData(mapOf(
+            way(1, tags = mapOf(road)) to line(gb1, gb2),
+            way(2, tags = mapOf(road, "traffic_sign" to "GB:616")) to line(gb1, gb2),
+            node(10, gb1, mapOf("traffic_sign" to "GB:616", "direction" to "forward")) to ElementPointGeometry(gb1),
+        ))
+        val styles = overlay.getStyledElements(data).associate { it.first.id to it.second }
+        assertEquals(mapOf(2L to trafficSignReadOnlyStyle, 10L to trafficSignNodeStyle), styles)
+    }
+
+    @Test fun `styling does not change the tags of nodes`() {
+        val tags = mapOf("traffic_sign" to "stop", "direction" to "forward")
+        val (element, _) = overlay.getStyledElements(
+            createMapData(mapOf(node(1, gb1, tags) to ElementPointGeometry(gb1)))
+        ).single()
+        assertEquals(tags, element.tags)
+    }
+
+    @Test fun `node tags are shown read-only with the tags of the direction`() {
+        assertEquals(
+            listOf(
+                "traffic_sign" to "GB:616",
+                "traffic_sign:forward" to "GB:610",
+                "traffic_sign:direction" to "backward",
+                "direction" to "90",
+            ),
+            readOnlyTrafficSignTags(
+                mapOf(
+                    "direction" to "90",
+                    "traffic_sign:direction" to "backward",
+                    "traffic_sign:forward" to "GB:610",
+                    "traffic_sign" to "GB:616",
+                    "highway" to "stop",
+                ),
+                TRAFFIC_SIGN_NODE_KEYS
+            )
+        )
     }
 
     /* -------------------------------- map movement and selection ----------------------------- */

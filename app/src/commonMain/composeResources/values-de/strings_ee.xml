@@ -715,8 +715,10 @@
     <string name="traffic_sign_overlay_readonly_border">Nach den Landesgrenzen, die die App kennt, liegt dieser Weg in mehreren Ländern (%1$s). Verkehrszeichen können nur an Wegen bearbeitet werden, die vollständig in einem unterstützten Land liegen. Teile den Weg dazu an der Grenze.</string>
     <string name="traffic_sign_overlay_readonly_uncertain">Es lässt sich nicht sicher feststellen, dass dieser Weg vollständig in einem Land liegt, zum Beispiel weil er nahe an einer Grenze verläuft. Seine Verkehrszeichen können deshalb hier nicht bearbeitet werden.</string>
     <string name="traffic_sign_overlay_readonly_tags_title">Vorhandene Verkehrszeichen-Tags</string>
-    <string name="traffic_sign_overlay_readonly_no_tags">Dieser Weg hat keine Verkehrszeichen-Tags.</string>
-    <string name="traffic_sign_overlay_readonly_no_direction">Ohne Richtungsangabe</string>
+    <string name="traffic_sign_overlay_readonly_no_tags">Es gibt keine Verkehrszeichen-Tags.</string>
+    <string name="traffic_sign_overlay_readonly_no_direction">Allgemein (Schlüssel ohne Richtung)</string>
+    <string name="traffic_sign_overlay_readonly_direction_tag">Richtungsangabe, wie getaggt</string>
+    <string name="traffic_sign_overlay_readonly_node">Verkehrszeichen an Punkten werden hier nur angezeigt und können in diesem Overlay nicht bearbeitet werden. Ihre Tags werden so angezeigt, wie sie sind.</string>
     <string name="traffic_sign_overlay_catalogue_missing">Der Verkehrszeichenkatalog konnte nicht geladen werden.</string>
     <string name="traffic_sign_overlay_loading">Verkehrszeichen werden geladen…</string>
     <string name="traffic_sign_overlay_direction_forward">Richtung des Weges</string>

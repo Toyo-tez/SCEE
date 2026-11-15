@@ -8,6 +8,7 @@ import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryMo
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPointGeometry
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
 import de.westnordost.streetcomplete.data.osm.geometry.ElementGeometry
+import de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox
 import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.data.osm.mapdata.Way
@@ -20,6 +21,7 @@ import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignValue
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWaySigns
 import de.westnordost.streetcomplete.osm.traffic_sign.WaySignSelection
 import de.westnordost.streetcomplete.osm.traffic_sign.deriveWayTags
+import de.westnordost.streetcomplete.osm.traffic_sign.isWayInGermany
 import de.westnordost.streetcomplete.osm.traffic_sign.needsTrafficSignSurvey
 import de.westnordost.streetcomplete.osm.traffic_sign.parseDE
 import de.westnordost.streetcomplete.overlays.traffic_sign.TrafficSignWayEditorState
@@ -46,6 +48,14 @@ class AddTrafficSignTypeTest {
     // Germany: lon < 10, Poland: lon >= 10
     private var lookups = 0
     private val country: (LatLon) -> String? = { lookups++; if (it.longitude < 10.0) "DE" else "PL" }
+    /** bounding boxes are guaranteed to be within a country if they do not touch the border */
+    private val containing: (BoundingBox) -> Set<String> = { b ->
+        when {
+            b.max.longitude < 10.0 -> setOf("DE")
+            b.min.longitude >= 10.0 -> setOf("PL")
+            else -> emptySet()
+        }
+    }
     private lateinit var questType: AddTrafficSignType
 
     /** the answers of these tests are the signs only: only the proposals that add tags are written */
@@ -55,7 +65,7 @@ class AddTrafficSignTypeTest {
     @BeforeTest fun setUp() {
         Prefs.preferences = mockPrefs3()
         lookups = 0
-        questType = AddTrafficSignType(country)
+        questType = AddTrafficSignType(country, containing)
     }
 
     private val de1 = LatLon(50.0, 9.0)
@@ -187,7 +197,7 @@ class AddTrafficSignTypeTest {
     @Test fun `quest stays Germany only, also for ways with traffic sign tags in France and Great Britain`() {
         // the read-only display of the overlay outside Germany does not extend the quest
         val c = TrafficSignTestCountries
-        val quest = AddTrafficSignType(c.getCountryCode)
+        val quest = AddTrafficSignType(c.getCountryCode, c.getContainingCountryCodes)
         fun applicableFor(tag: Pair<String, String>, geometry: ElementGeometry): List<Long> =
             quest.getApplicableElements(createMapData(mapOf(w(road, tag) to geometry))).map { it.id }
         val tagsThatNeedASurvey = listOf(
@@ -204,6 +214,38 @@ class AddTrafficSignTypeTest {
             assertEquals(listOf(1L), applicableFor(tag, c.line(c.de1, c.de2)), "$tag")
         }
         assertEquals(NoCountriesExcept("DE"), quest.enabledInCountries)
+    }
+
+    @Test fun `ways that leave Germany between their ends are not asked`() {
+        val pl2 = LatLon(50.0, 10.6)
+        // first, middle and last point in Germany: the former check alone accepted this
+        val geometry = ElementPolylinesGeometry(listOf(listOf(de1, pl, de2, pl2, de1)), de2)
+        assertEquals(emptyList(), applicable(w(road) to geometry))
+    }
+
+    @Test fun `ways that leave Germany between two vertices are not asked`() {
+        // the line between two German vertices passes through the Austrian pocket of the test world
+        val c = TrafficSignTestCountries
+        val quest = AddTrafficSignType(c.getCountryCode, c.getContainingCountryCodes)
+        val geometry = c.line(LatLon(50.52, 9.7), LatLon(50.49, 9.7))
+        assertEquals(emptyList(), quest.getApplicableElements(createMapData(mapOf(w(road) to geometry))).toList())
+    }
+
+    @Test fun `ways with points of unknown country are not asked`() {
+        // vertices in Germany, but the country of the points in between is unknown
+        val quest = AddTrafficSignType({ if (it == de1 || it == de2) "DE" else null }) { emptySet() }
+        assertEquals(emptyList(), quest.getApplicableElements(createMapData(mapOf(w(road) to line(de1, de2)))).toList())
+    }
+
+    @Test fun `ways near the border but completely in Germany are still asked`() {
+        // not guaranteed by the bounding boxes, but every point is in Germany
+        val c = TrafficSignTestCountries
+        val quest = AddTrafficSignType(c.getCountryCode, c.getContainingCountryCodes)
+        val geometry = c.line(LatLon(50.0, 9.9995), LatLon(50.01, 9.9996), LatLon(50.02, 9.9995))
+        assertEquals(listOf(1L), quest.getApplicableElements(createMapData(mapOf(w(road) to geometry))).map { it.id })
+        // also without any information about bounding boxes
+        val withoutBoxes = AddTrafficSignType(c.getCountryCode)
+        assertEquals(listOf(1L), withoutBoxes.getApplicableElements(createMapData(mapOf(w(road) to geometry))).map { it.id })
     }
 
     @Test fun `country is only looked up for ways that qualify by their tags`() {
@@ -524,13 +566,21 @@ class AddTrafficSignTypeTest {
             kotlinx.io.Buffer().also { it.write(bytes) }
         )
         val real: (LatLon) -> String? = { boundaries.getIds(it.longitude, it.latitude).firstOrNull() }
-        val realQuest = AddTrafficSignType(real)
+        val realContaining: (BoundingBox) -> Set<String> = {
+            boundaries.getContainingIds(it.min.longitude, it.min.latitude, it.max.longitude, it.max.latitude)
+        }
+        val realQuest = AddTrafficSignType(real, realContaining)
         val ways = syntheticWays(200_000, Random(42))
         val data = createMapData(ways)
         realQuest.getApplicableElements(data).count() // warm up
         var count = 0
         val time = measureTime { count = realQuest.getApplicableElements(data).count() }
         println("PERF real boundaries: 200000 ways -> $count quests, $time")
+
+        // never more ways than with the former check (center, first and last point) alone
+        val formerlyInGermany = ways.filter { (_, g) -> isWayInGermany(g, real) }.keys.map { it.id }.toSet()
+        val asked = realQuest.getApplicableElements(data).map { it.id }.toSet()
+        assertTrue(formerlyInGermany.containsAll(asked))
 
         // cost of one isApplicableTo == null: the controller then runs getApplicableElements on all
         // ways of the surrounding area (padded bbox of the updated element) and picks the element

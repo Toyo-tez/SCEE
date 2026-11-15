@@ -11,7 +11,10 @@ import de.westnordost.osmfeatures.FeatureDictionary
 import de.westnordost.streetcomplete.Prefs
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.osm.edits.MapDataWithEditsSource
+import de.westnordost.streetcomplete.data.osm.geometry.ElementGeometry
+import de.westnordost.streetcomplete.data.osm.geometry.ElementPointGeometry
 import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
+import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.overlays.Action
 import de.westnordost.streetcomplete.data.overlays.OverlayAction
 import de.westnordost.streetcomplete.data.preferences.Preferences
@@ -26,6 +29,7 @@ import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.g
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.line
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.unknown1
 import de.westnordost.streetcomplete.testutils.inMemoryPrefs
+import de.westnordost.streetcomplete.testutils.node
 import de.westnordost.streetcomplete.testutils.way
 import dev.mokkery.mock
 import kotlinx.io.files.SystemFileSystem
@@ -74,8 +78,11 @@ class TrafficSignReadOnlyOverlayFormTest {
     }
 
     private fun show(tags: Map<String, String>, geometry: ElementPolylinesGeometry) {
+        show(way(1, nodes = listOf(1, 2, 3), tags = tags), geometry)
+    }
+
+    private fun show(w: Element, geometry: ElementGeometry) {
         Prefs.preferences = preferences
-        val w = way(1, nodes = listOf(1, 2, 3), tags = tags)
         compose.setContent {
             KoinIsolatedContext(testKoin) {
                 MaterialTheme {
@@ -101,7 +108,7 @@ class TrafficSignReadOnlyOverlayFormTest {
             .assertIsDisplayed()
         compose.onNodeWithText("traffic_sign=FR:B1").assertIsDisplayed()
         compose.onNodeWithText("traffic_sign:forward=FR:C12").assertIsDisplayed()
-        compose.onNodeWithText("No direction given").assertIsDisplayed()
+        compose.onNodeWithText("General (key without direction)").assertIsDisplayed()
         compose.onNodeWithText("Direction of the way").assertIsDisplayed()
         compose.onNodeWithText("Split way").assertDoesNotExist()
         // showing the form does nothing by itself
@@ -128,6 +135,30 @@ class TrafficSignReadOnlyOverlayFormTest {
         compose.onNodeWithText("Split way").performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf<OverlayAction>(Action.SplitWay), actions)
+    }
+
+    @Test fun `node shows its traffic sign and direction tags as they are and saves nothing`() {
+        val n = node(1, gb1, mapOf("traffic_sign" to "GB:616", "direction" to "forward", "highway" to "give_way"))
+        show(n, ElementPointGeometry(gb1))
+        compose.onNodeWithText("Traffic signs on points are only shown here", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("traffic_sign=GB:616").assertIsDisplayed()
+        compose.onNodeWithText("direction=forward").assertIsDisplayed()
+        compose.onNodeWithText("Direction, as tagged").assertIsDisplayed()
+        compose.onNodeWithText("highway=give_way").assertDoesNotExist()
+        compose.onNodeWithText("Split way").assertDoesNotExist()
+        assertEquals(emptyList(), actions)
+
+        compose.onNodeWithText("Show/edit tags").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(listOf<OverlayAction>(Action.EditTags), actions)
+    }
+
+    @Test fun `node in Germany is read-only, too`() {
+        // there is no editor for signs on nodes, also not in Germany: no catalogue is needed
+        show(node(1, de1, mapOf("traffic_sign" to "stop")), ElementPointGeometry(de1))
+        compose.onNodeWithText("traffic_sign=stop").assertIsDisplayed()
+        compose.onNodeWithText("Traffic signs on points are only shown here", substring = true).assertIsDisplayed()
+        assertEquals(emptyList(), actions)
     }
 
     @Test fun `way in Germany with a part of unknown country is uncertain and not editable`() {

@@ -209,7 +209,7 @@ class TrafficSignProposalStateTest {
     )
 
     private fun questResult(tags: Map<String, String>, answer: TrafficSignAnswer) =
-        AddTrafficSignType { null }.answerAppliedTo(answer, tags).let { changes ->
+        AddTrafficSignType({ null }).answerAppliedTo(answer, tags).let { changes ->
             val m = tags.toMutableMap()
             for (c in changes) when (c) {
                 is StringMapEntryAdd -> m[c.key] = c.value
@@ -255,7 +255,7 @@ class TrafficSignProposalStateTest {
 
     @Test fun `the default answer of the quest only adds tags`() {
         val tags = mapOf(road, "vehicle" to "yes", "bicycle" to "yes")
-        val changes = AddTrafficSignType { null }.answerAppliedTo(TrafficSignAnswer(editor().state.let { catalogueSigns("DE:250") }), tags)
+        val changes = AddTrafficSignType({ null }).answerAppliedTo(TrafficSignAnswer(editor().state.let { catalogueSigns("DE:250") }), tags)
         assertTrue(changes.none { it is StringMapEntryDelete }, changes.toString())
         assertTrue(changes.none { it is StringMapEntryModify && it.key != "traffic_sign" }, changes.toString())
     }
