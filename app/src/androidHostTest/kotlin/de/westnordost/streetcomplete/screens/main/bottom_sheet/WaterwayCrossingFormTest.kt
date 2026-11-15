@@ -188,18 +188,21 @@ class WaterwayCrossingFormTest {
         assertEquals(Action.CantSay, questAction)
     }
 
-    @Test fun `ford answer is hidden on roads which only allow structures`() {
+    @Test fun `ford answer remains available on a major road`() {
         crossing = crossing.copy(road = f.road.copy(tags = mapOf("highway" to "primary")))
         show()
         compose.onNodeWithText("Bridge").assertExists()
         compose.onNodeWithText("Culvert").assertExists()
-        compose.onNodeWithText("Ford").assertDoesNotExist()
+        compose.onNodeWithText("Road tunnel").assertExists()
+        compose.onNodeWithText("Ford").assertExists()
     }
 
     @Test fun `start uses regular answers and contains no technical details`() {
         show()
         compose.onNodeWithText("What is at this crossing?").assertExists()
         for (answer in listOf("Bridge", "Culvert", "Ford")) compose.onNodeWithText(answer).assertExists()
+        compose.onNodeWithText("Road tunnel").assertExists()
+        compose.onNodeWithText("Aqueduct").assertDoesNotExist()
         compose.onNodeWithText("highway=", substring = true).assertDoesNotExist()
         compose.onNodeWithText("way 10", substring = true).assertDoesNotExist()
         assertNull(saved)
@@ -277,6 +280,15 @@ class WaterwayCrossingFormTest {
 
     @Test fun `bridge saves atomically after exactly two cuts`() = structure("Bridge", f.bridge)
     @Test fun `culvert saves atomically after exactly two cuts`() = structure("Culvert", f.culvert)
+    @Test fun `road tunnel saves by splitting the road`() = structure("Road tunnel", f.bridge.copy(structure = WaterwayStructure.ROAD_TUNNEL))
+    @Test fun `aqueduct answer is available for canals`() {
+        val canal = f.water.copy(tags = mapOf("waterway" to "canal"))
+        f.data.putElement(canal)
+        crossing = crossing.copy(waterway = canal)
+        show()
+        compose.onNodeWithText("Aqueduct").assertExists()
+        compose.onNodeWithText("Road tunnel").assertExists()
+    }
 
     private fun cuts(label: String, action: SetWaterwayStructureAction) {
         mapPosition.value = action.splits[0].pos
@@ -303,7 +315,7 @@ class WaterwayCrossingFormTest {
         assertEquals(action.structure, edit.structure)
         val middle = (edit.createUpdates(f.repo, f.idProvider()).let { it.creations + it.modifications })
             .filterIsInstance<Way>().single { "bridge" in it.tags || "tunnel" in it.tags }
-        assertEquals(if (action.structure == WaterwayStructure.BRIDGE) "1" else "-1", middle.tags["layer"])
+        assertEquals(if (action.structure == WaterwayStructure.BRIDGE || action.structure == WaterwayStructure.AQUEDUCT) "1" else "-1", middle.tags["layer"])
         compose.onNodeWithText("Preview", substring = true).assertDoesNotExist()
     }
 

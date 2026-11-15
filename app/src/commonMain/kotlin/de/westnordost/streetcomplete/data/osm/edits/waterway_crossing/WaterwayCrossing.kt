@@ -145,7 +145,7 @@ internal fun checkCrossing(road: Way, water: Way, rp: List<LatLon>, wp: List<Lat
     crossingCheck(crossings.count { it.equalsInOsm(pos) } == 1,
         "Crossing is no longer unique")
     if (shared.isNotEmpty()) {
-        crossingCheck(road.allowsSimpleWaterwayFord(), "Ford on this road requires manual editing")
+        crossingCheck(road.allowsWaterwayFord(), "Ford on this road requires manual editing")
         val ri = road.nodeIds.indexOf(shared.single())
         val wi = water.nodeIds.indexOf(shared.single())
         crossingCheck(ri in 1 until rp.lastIndex && wi in 1 until wp.lastIndex,
@@ -301,8 +301,7 @@ fun uniqueCrossingPoints(first: List<LatLon>, second: List<LatLon>): List<LatLon
     return result
 }
 
-internal fun Way.allowsSimpleWaterwayFord() = tags["highway"] in setOf(
-    "residential", "unclassified", "service", "living_street", "track", "path", "footway", "cycleway", "bridleway", "pedestrian")
+internal fun Way.allowsWaterwayFord() = isCrossingRoad()
 
 /** Bridge and culvert need an interior crossing; a shared vertex at the crossing supports only ford. */
 fun crossingSupportsBridgeOrCulvert(road: Way, water: Way, roadPositions: List<LatLon>, position: LatLon): Boolean =

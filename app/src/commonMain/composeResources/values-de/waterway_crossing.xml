@@ -4,6 +4,8 @@
     <string name="waterway_crossing_unavailable">Diese Kreuzung kann nicht automatisch bearbeitet werden.</string>
     <string name="waterway_crossing_bridge">Brücke</string>
     <string name="waterway_crossing_culvert">Durchlass</string>
+    <string name="waterway_crossing_aqueduct">Kanalbrücke (Aquädukt)</string>
+    <string name="waterway_crossing_road_tunnel">Straßentunnel</string>
     <string name="waterway_crossing_ford">Furt</string>
     <string name="waterway_crossing_boundaries">Markiere Anfang und Ende auf der Karte.</string>
     <string name="waterway_crossing_save">Speichern</string>

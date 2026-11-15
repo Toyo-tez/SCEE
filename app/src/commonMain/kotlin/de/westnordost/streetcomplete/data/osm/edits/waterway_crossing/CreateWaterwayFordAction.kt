@@ -25,7 +25,7 @@ data class CreateWaterwayFordAction(val crossing: WaterwayCrossing) : ElementEdi
         crossingCheck(crossing.nearbyWays.none { context -> repository.positionsForWay(context.way.id).zipWithNext().any { (a, b) ->
             crossing.position.distanceToArc(a, b) < MIN_CROSSING_EDGE_LENGTH
         } }, "Additional way at ford; use manual editing")
-        crossingCheck(road.allowsSimpleWaterwayFord(),
+        crossingCheck(road.allowsWaterwayFord(),
             "Ford on this road requires manual editing")
         fun positions(way: Way) = way.nodeIds.map {
             repository.getNode(it)?.position ?: throw de.westnordost.streetcomplete.data.ConflictException("Incomplete crossing geometry")

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 import de.westnordost.streetcomplete.util.ktx.equalsInOsm
 
 @Serializable
-enum class WaterwayStructure { BRIDGE, CULVERT }
+enum class WaterwayStructure { BRIDGE, CULVERT, AQUEDUCT, ROAD_TUNNEL }
 
 /** One persisted edit and one upload: both cuts, relation replacements and structure tags.
  * iD crossing_ways.makeAddBridgeOrTunnelFix is the reference for selecting the bounded piece;
@@ -22,8 +22,9 @@ data class SetWaterwayStructureAction(
     val structure: WaterwayStructure,
     val splits: List<SplitPolylineAtPosition>,
 ) : ElementEditAction {
+    private val editsRoad get() = structure == WaterwayStructure.BRIDGE || structure == WaterwayStructure.ROAD_TUNNEL
     private val splitAction get() = SplitWayAction(
-        if (structure == WaterwayStructure.BRIDGE) crossing.road else crossing.waterway, splits)
+        if (editsRoad) crossing.road else crossing.waterway, splits)
     override val newElementsCount get() = splitAction.newElementsCount
     override val elementKeys get() = crossing.elementKeys
     override fun idsUpdatesApplied(updatedIds: Map<ElementKey, Long>) =
@@ -32,7 +33,7 @@ data class SetWaterwayStructureAction(
     /** Same ordering as SplitWayAction, without reserving IDs or changing map data. */
     fun selectedPositions(): List<LatLon> {
         crossingCheck(splits.size == 2, "Choose two boundaries")
-        val positions = if (structure == WaterwayStructure.BRIDGE) crossing.roadPositions else crossing.waterwayPositions
+        val positions = if (editsRoad) crossing.roadPositions else crossing.waterwayPositions
         val cuts = splits.map { it.toSplitWayAt(positions) }.sorted()
         val start = when (val cut = cuts.first()) {
             is SplitWayAtIndex -> cut.index + 1
@@ -54,7 +55,7 @@ data class SetWaterwayStructureAction(
         fun currentPositions(way: Way) = way.nodeIds.map {
             repository.getNode(it)?.position ?: throw ConflictException("Incomplete crossing geometry")
         }
-        val positions = currentPositions(if (structure == WaterwayStructure.BRIDGE) crossing.road else crossing.waterway)
+        val positions = currentPositions(if (editsRoad) crossing.road else crossing.waterway)
         val actualCrossing = uniqueCrossingPoints(currentPositions(crossing.road), currentPositions(crossing.waterway)).single { it.equalsInOsm(crossing.position) }
         for (split in splits) {
             val resolved = split.toSplitWayAt(positions)
@@ -80,8 +81,8 @@ data class SetWaterwayStructureAction(
             setOf(it.nodeIds.first(), it.nodeIds.last()) == boundaryIds.toSet()
         } ?: throw ConflictException("No unique middle piece")
         val middlePositions = middle.nodeIds.map(::position)
-        val target = if (structure == WaterwayStructure.BRIDGE) crossing.road else crossing.waterway
-        val counterparts = listOf(if (structure == WaterwayStructure.BRIDGE) crossing.waterway else crossing.road) + crossing.nearbyWays.map { it.way }
+        val target = if (editsRoad) crossing.road else crossing.waterway
+        val counterparts = listOf(if (editsRoad) crossing.waterway else crossing.road) + crossing.nearbyWays.map { it.way }
         val enclosed = mutableListOf<LatLon>()
         for (snapshot in counterparts.distinctBy { it.id }) {
             val complete = repository.getWayComplete(snapshot.id) ?: throw ConflictException("Crossing context unavailable")
@@ -95,7 +96,7 @@ data class SetWaterwayStructureAction(
                 crossingCheck(enclosed.none { it.distanceTo(point) < MIN_CROSSING_EDGE_LENGTH },
                     "Additional way at crossing; use manual editing")
                 enclosed.add(point)
-                if (structure == WaterwayStructure.BRIDGE) checkCrossing(target, other, positions, op, point)
+                if (editsRoad) checkCrossing(target, other, positions, op, point)
                 else checkCrossing(other, target, op, positions, point)
                 crossingCheck(middlePositions.first().distanceTo(point) >= MIN_CROSSING_EDGE_LENGTH
                     && middlePositions.last().distanceTo(point) >= MIN_CROSSING_EDGE_LENGTH,
@@ -111,6 +112,8 @@ data class SetWaterwayStructureAction(
         val tagged = middle.copy(tags = middle.tags + when (structure) {
             WaterwayStructure.BRIDGE -> mapOf("bridge" to "yes", "layer" to "1")
             WaterwayStructure.CULVERT -> mapOf("tunnel" to "culvert", "layer" to "-1")
+            WaterwayStructure.AQUEDUCT -> mapOf("bridge" to "aqueduct", "layer" to "1")
+            WaterwayStructure.ROAD_TUNNEL -> mapOf("tunnel" to "yes", "layer" to "-1")
         })
         fun replace(element: Element) = if (element.key == middle.key) tagged else element
         return changes.copy(creations = changes.creations.map(::replace), modifications = changes.modifications.map(::replace))

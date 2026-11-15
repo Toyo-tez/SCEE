@@ -124,6 +124,36 @@ class WaterwayCrossingActionTest {
         assertTrue(changes.modifications.none { it.key == f.road.key })
     }
 
+    @Test fun `road tunnel is tagged on the road and closes only that crossing`() {
+        val road = f.road.copy(tags = f.road.tags + ("surface" to "asphalt"))
+        f.data.putElement(road)
+        val crossing = f.crossing.copy(road = road)
+        assertEquals(listOf(crossing.road), de.westnordost.streetcomplete.quests.waterway_crossing.AddWaterwayCrossing().getApplicableElements(f.data).toList())
+        val action = SetWaterwayStructureAction(crossing, WaterwayStructure.ROAD_TUNNEL, f.splits)
+        val changes = action.createUpdates(f.repo, f.idProvider())
+        val middle = changes.ways().single { it.tags["tunnel"] == "yes" }
+        assertEquals(mapOf("highway" to "residential", "name" to "Road", "surface" to "asphalt",
+            "tunnel" to "yes", "layer" to "-1"), middle.tags)
+        (changes.creations + changes.modifications).forEach { f.data.putElement(it) }
+        assertTrue(de.westnordost.streetcomplete.quests.waterway_crossing.AddWaterwayCrossing().getCrossings(f.data).isEmpty())
+    }
+
+    @Test fun `canal aqueduct is tagged on the waterway and closes only that crossing`() {
+        val canal = f.water.copy(tags = mapOf("waterway" to "canal", "name" to "Canal"))
+        f.data.putElement(canal)
+        val crossing = f.crossing.copy(waterway = canal)
+        assertEquals(listOf(f.road), de.westnordost.streetcomplete.quests.waterway_crossing.AddWaterwayCrossing().getApplicableElements(f.data).toList())
+        val splits = listOf(SplitAtLinePosition(f.waterPositions[0], f.waterPositions[1], 0.4),
+            SplitAtLinePosition(f.waterPositions[0], f.waterPositions[1], 0.6))
+        val action = SetWaterwayStructureAction(crossing, WaterwayStructure.AQUEDUCT, splits)
+        val changes = action.createUpdates(f.repo, f.idProvider())
+        val middle = changes.ways().single { it.tags["bridge"] == "aqueduct" }
+        assertEquals(mapOf("waterway" to "canal", "name" to "Canal", "bridge" to "aqueduct", "layer" to "1"), middle.tags)
+        assertTrue(changes.modifications.none { it.id == f.road.id })
+        (changes.creations + changes.modifications).forEach { f.data.putElement(it) }
+        assertTrue(de.westnordost.streetcomplete.quests.waterway_crossing.AddWaterwayCrossing().getCrossings(f.data).isEmpty())
+    }
+
     @Test fun `route and restriction replacements refer to actual split results`() {
         f.data.putElement(rel(30, listOf(member(ElementType.WAY, 10, "forward")), mapOf("type" to "route")))
         f.data.putElement(rel(31, listOf(member(ElementType.WAY, 10, "from"), member(ElementType.NODE, 4, "via")), mapOf("type" to "restriction")))
@@ -206,11 +236,42 @@ class WaterwayCrossingActionTest {
         assertEquals(f.road.tags, changes.ways().single { it.id == 10L }.tags)
     }
 
-    @Test fun `ford rejects nearby vertices major roads and additional crossing ways`() {
-        val road = f.road.copy(tags = mapOf("highway" to "primary"))
+    @Test fun `ford on primary road tags only the new node and keeps highway tags`() {
+        val road = f.road.copy(tags = mapOf("highway" to "primary", "ref" to "B1"))
         f.data.putElement(road)
-        assertFailsWith<ConflictException> { CreateWaterwayFordAction(f.crossing.copy(road = road)).createUpdates(f.repo, f.idProvider()) }
+        val changes = CreateWaterwayFordAction(f.crossing.copy(road = road)).createUpdates(f.repo, f.idProvider())
+        val node = changes.creations.single() as Node
+        assertEquals(mapOf("ford" to "yes"), node.tags)
+        assertEquals(road.tags, changes.ways().single { it.id == 10L }.tags)
+        assertTrue(changes.ways().all { node.id in it.nodeIds })
+        assertEquals(1, changes.ways().single { it.id == 10L }.nodeIds.count { it == node.id })
+    }
+
+    @Test fun `road tunnel and aqueduct refuse existing structure or layer tags`() {
+        for (key in listOf("bridge", "tunnel", "layer")) {
+            f.data.putElement(f.road.copy(tags = f.road.tags + (key to "1")))
+            assertFailsWith<ConflictException> {
+                SetWaterwayStructureAction(f.crossing, WaterwayStructure.ROAD_TUNNEL, f.splits).createUpdates(f.repo, f.idProvider())
+            }
+        }
         f.data.putElement(f.road)
+        val canal = f.water.copy(tags = mapOf("waterway" to "canal", "layer" to "1"))
+        f.data.putElement(canal)
+        val splits = listOf(SplitAtLinePosition(f.waterPositions[0], f.waterPositions[1], 0.4),
+            SplitAtLinePosition(f.waterPositions[0], f.waterPositions[1], 0.6))
+        assertFailsWith<ConflictException> {
+            SetWaterwayStructureAction(f.crossing.copy(waterway = canal), WaterwayStructure.AQUEDUCT, splits).createUpdates(f.repo, f.idProvider())
+        }
+    }
+
+    @Test fun `road tunnel is rejected for degenerate boundaries`() {
+        val tiny = listOf(f.splits[0], SplitAtLinePosition(f.roadPositions[1], f.roadPositions[2], 0.2500001))
+        assertFailsWith<ConflictException> {
+            SetWaterwayStructureAction(f.crossing, WaterwayStructure.ROAD_TUNNEL, tiny).createUpdates(f.repo, f.idProvider())
+        }
+    }
+
+    @Test fun `ford rejects nearby vertices and additional crossing ways`() {
         val nearby = f.roadPositions.toMutableList().also { it[1] = p(0.0, -0.000001) }
         assertFailsWith<ConflictException> { checkCrossing(f.road, f.water, nearby, f.waterPositions, p()) }
         val other = f.water.copy(id = 21)

@@ -77,8 +77,9 @@ fun WaterwayCrossingForm(
 
     val selected = structure
     if (selected != null) {
-        val way = if (selected == WaterwayStructure.BRIDGE) crossing.road else crossing.waterway
-        val positions = if (selected == WaterwayStructure.BRIDGE) crossing.roadPositions else crossing.waterwayPositions
+        val roadStructure = selected == WaterwayStructure.BRIDGE || selected == WaterwayStructure.ROAD_TUNNEL
+        val way = if (roadStructure) crossing.road else crossing.waterway
+        val positions = if (roadStructure) crossing.roadPositions else crossing.waterwayPositions
         SplitWayForm(
             onConfirmed = { cuts -> save(SetWaterwayStructureAction(crossing, selected, cuts)) },
             onDismiss = { cancelSave(); structure = null },
@@ -92,7 +93,7 @@ fun WaterwayCrossingForm(
                         val action = SetWaterwayStructureAction(crossing, selected, cuts)
                         val section = action.selectedPositions()
                         val nearby = source.getMapDataWithGeometry(section.enclosingBoundingBox().enlargedBy(500.0))
-                        val counterpart = if (selected == WaterwayStructure.BRIDGE)
+                        val counterpart = if (roadStructure)
                             CrossingContextWay(crossing.waterway, crossing.waterwayPositions)
                         else CrossingContextWay(crossing.road, crossing.roadPositions)
                         (listOf(counterpart) + crossing.nearbyWays + nearby.ways.filter { it.id != way.id
@@ -120,11 +121,15 @@ fun WaterwayCrossingForm(
             hintImages = emptyList(),
             note = null,
             answers = if (submitted || saving) emptyList() else buildList {
-                if (crossingSupportsBridgeOrCulvert(crossing.road, crossing.waterway, crossing.roadPositions, crossing.position)) addAll(listOf(
-                    AnswerItem(stringResource(Res.string.waterway_crossing_bridge)) { structure = WaterwayStructure.BRIDGE },
-                    AnswerItem(stringResource(Res.string.waterway_crossing_culvert)) { structure = WaterwayStructure.CULVERT },
-                ))
-                if (crossing.road.allowsSimpleWaterwayFord()) add(
+                if (crossingSupportsBridgeOrCulvert(crossing.road, crossing.waterway, crossing.roadPositions, crossing.position)) {
+                    add(AnswerItem(stringResource(Res.string.waterway_crossing_bridge)) { structure = WaterwayStructure.BRIDGE })
+                    add(AnswerItem(stringResource(Res.string.waterway_crossing_culvert)) { structure = WaterwayStructure.CULVERT })
+                    add(AnswerItem(stringResource(Res.string.waterway_crossing_road_tunnel)) { structure = WaterwayStructure.ROAD_TUNNEL })
+                    if (crossing.waterway.tags["waterway"] == "canal") add(
+                        AnswerItem(stringResource(Res.string.waterway_crossing_aqueduct)) { structure = WaterwayStructure.AQUEDUCT }
+                    )
+                }
+                if (crossing.road.allowsWaterwayFord()) add(
                     AnswerItem(stringResource(Res.string.waterway_crossing_ford)) { save(CreateWaterwayFordAction(crossing)) }
                 )
             },
