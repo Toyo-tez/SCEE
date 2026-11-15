@@ -14,6 +14,7 @@ import de.westnordost.streetcomplete.data.osm.mapdata.Way
 import de.westnordost.streetcomplete.data.overlays.OverlayStyle
 import de.westnordost.streetcomplete.osm.traffic_sign.DirectionSelection
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignDirection
+import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestData
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignValue
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWaySigns
@@ -181,6 +182,28 @@ class AddTrafficSignTypeTest {
         assertEquals(emptyList(), applicable(w(road) to line(pl, de1, de2)))
         assertEquals(emptyList(), applicable(w(road) to null))
         assertEquals(listOf(1L), applicable(w(road) to line(de1, de2)))
+    }
+
+    @Test fun `quest stays Germany only, also for ways with traffic sign tags in France and Great Britain`() {
+        // the read-only display of the overlay outside Germany does not extend the quest
+        val c = TrafficSignTestCountries
+        val quest = AddTrafficSignType(c.getCountryCode)
+        fun applicableFor(tag: Pair<String, String>, geometry: ElementGeometry): List<Long> =
+            quest.getApplicableElements(createMapData(mapOf(w(road, tag) to geometry))).map { it.id }
+        val tagsThatNeedASurvey = listOf(
+            "traffic_sign" to "yes",
+            "traffic_sign:forward" to "FR:B1",
+            "traffic_sign:backward" to "GB:616",
+        )
+        for (geometry in listOf(c.line(c.fr1, c.fr2), c.line(c.gb1, c.gb2), c.line(c.at1, c.at2), c.line(c.de1, c.at1))) {
+            for (tag in tagsThatNeedASurvey) {
+                assertEquals(emptyList(), applicableFor(tag, geometry), "$tag $geometry")
+            }
+        }
+        for (tag in tagsThatNeedASurvey) {
+            assertEquals(listOf(1L), applicableFor(tag, c.line(c.de1, c.de2)), "$tag")
+        }
+        assertEquals(NoCountriesExcept("DE"), quest.enabledInCountries)
     }
 
     @Test fun `country is only looked up for ways that qualify by their tags`() {
@@ -361,7 +384,13 @@ class AddTrafficSignTypeTest {
     }
 
     @Test fun `the overlay still handles its own selection of ways`() {
-        val overlay = TrafficSignOverlay(country)
+        val overlay = TrafficSignOverlay(country) { bbox ->
+            when {
+                bbox.max.longitude < 10.0 -> setOf("DE")
+                bbox.min.longitude >= 10.0 -> setOf("PL")
+                else -> emptySet()
+            }
+        }
         val ways: Map<Element, ElementGeometry?> = mapOf(w(road, id = 1) to line(de1, de2), w(road, id = 2) to line(de1, de2, pl))
         assertEquals(listOf(1L), overlay.getStyledElements(createMapData(ways)).map { it.first.id }.toList())
     }

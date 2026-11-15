@@ -34,3 +34,18 @@ fun trafficSignWayStyle(tags: Map<String, String>): OverlayStyle.Polyline {
     }
     return OverlayStyle.Polyline(stroke)
 }
+
+/** Color of ways that are only shown read-only (outside the area of the traffic sign editor). Blue
+ *  is not used by [trafficSignWayStyle], so it can not be mistaken for any survey state. */
+val ReadOnlySignsColor = OverlayColor.Blue
+
+/** Style of ways that are only shown read-only: the same for every value, because the values are
+ *  not interpreted (there is no catalogue for them) and nothing is said about completeness */
+val trafficSignReadOnlyStyle = OverlayStyle.Polyline(OverlayStyle.Stroke(ReadOnlySignsColor))
+
+/** The keys of traffic signs that are shown read-only, in the order in which they are shown */
+val TRAFFIC_SIGN_KEYS = listOf("traffic_sign", "traffic_sign:forward", "traffic_sign:backward")
+
+/** Whether any of [TRAFFIC_SIGN_KEYS] has a (non-blank) value */
+fun hasTrafficSignTags(tags: Map<String, String>): Boolean =
+    TRAFFIC_SIGN_KEYS.any { !tags[it].isNullOrBlank() }
