@@ -140,6 +140,60 @@ class SchemaTracksTest {
         before.filterKeys { it != SchemaTracks.TABLE }.forEach { (table, rows) -> assertEquals(rows, snapshot(db)[table]) }
     }
 
+    @Test fun `fork migrations run exactly once across repeated and partial runs`() = database { db ->
+        db.initialize(StreetCompleteDatabaseConfigurator)
+        val runs = IntArray(4)
+        fun counting(i: Int): (Database) -> Unit = { runs[i]++ }
+        val list = listOf(counting(0), counting(1), counting(2), counting(3))
+        val cfg = object : DatabaseConfigurator by StreetCompleteDatabaseConfigurator {
+            override fun migrate(db: Database, oldVersion: Int) {
+                SchemaTracks.migrate(db, 22, { _, _ -> error("upstream must not rerun") }, list)
+            }
+        }
+        repeat(3) { db.initialize(cfg) }
+        assertEquals(listOf(0, 0, 0, 1), runs.toList()) // only the new slot 4 ran, once
+        assertEquals(mapOf("upstream" to 22, "fork" to 4), SchemaTracks.read(db))
+    }
+
+    @Test fun `upstream track beyond supported or unexpected extra track is refused`() {
+        for (damage in listOf<(Database) -> Unit>(
+            { it.exec("UPDATE scee_schema_tracks SET version=23 WHERE track='upstream'") },
+            { it.exec("UPDATE scee_schema_tracks SET version=21 WHERE track='upstream'") },
+            { it.exec("INSERT INTO scee_schema_tracks (track, version) VALUES ('other', 1)") },
+        )) database { db ->
+            db.initialize(StreetCompleteDatabaseConfigurator)
+            damage(db)
+            val before = snapshot(db)
+            assertFailsWith<IllegalStateException> { db.initialize(StreetCompleteDatabaseConfigurator) }
+            assertEquals(before, snapshot(db))
+        }
+    }
+
+    @Test fun `legacy schema below 22 is refused without touching data`() = database { db ->
+        LegacySchemaFixtures.create(db, 22, upstreamOnly = true)
+        db.exec("PRAGMA user_version=21")
+        val before = snapshot(db)
+        assertFailsWith<IllegalStateException> { db.initialize(StreetCompleteDatabaseConfigurator) }
+        assertEquals(before, snapshot(db))
+        assertEquals(21, db.rawQuery("PRAGMA user_version") { it.getInt("user_version") }.single())
+    }
+
+    @Test fun `legacy 23 marker with note journal present is refused`() = database { db ->
+        LegacySchemaFixtures.create(db, 24)
+        db.exec("PRAGMA user_version=23")
+        val before = snapshot(db)
+        assertFailsWith<IllegalStateException> { db.initialize(StreetCompleteDatabaseConfigurator) }
+        assertEquals(before, snapshot(db))
+    }
+
+    @Test fun `unversioned database with existing tables is refused not recreated`() = database { db ->
+        LegacySchemaFixtures.create(db, 22, upstreamOnly = true)
+        db.exec("PRAGMA user_version=0")
+        val before = snapshot(db)
+        assertFailsWith<Exception> { db.initialize(StreetCompleteDatabaseConfigurator) }
+        assertEquals(before, snapshot(db))
+    }
+
     private fun seed(db: Database, version: Int) {
         val edits = ElementEditsDao(db, AllEditTypes(emptyList(), listOf(TestElementEditType)), TestElementEditType, TestElementEditType)
         val edit = edit(action = CreateNodeAction(p(), mapOf("amenity" to "bench")))
