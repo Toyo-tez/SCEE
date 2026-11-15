@@ -3,3 +3,7 @@
 # Keep CI helper scripts and osmfeatures patches with LF on all platforms.
 third_party/osmfeatures/**/*.sh text eol=lf
 third_party/osmfeatures/**/*.patch text eol=lf
+
+# Bundled test fixtures must match the LF bytes assumed in BundledAssetsContract.
+app/src/commonMain/composeResources/files/m4-fixtures/** text eol=lf
+tools/traffic-sign-parity/reference.jsonl text eol=lf

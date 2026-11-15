@@ -1,0 +1,10 @@
+{
+  "name": "traffic-sign-parity",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Reference outputs of @osm-traffic-signs/converter for the SCEE parity test. Not part of the app.",
+  "type": "module",
+  "dependencies": {
+    "@osm-traffic-signs/converter": "0.8.0"
+  }
+}

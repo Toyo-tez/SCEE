@@ -29,7 +29,8 @@ captures
 xcuserdata
 /androidApp/release
 /.ai
-/tools
+/tools/*
+!/tools/traffic-sign-parity/
 /output/
 # Local working notes under docs/ (versioned: docs/audits/, docs/reliability-audit/)
 /docs/reliability-package-b.md

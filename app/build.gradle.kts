@@ -568,11 +568,6 @@ val crossingVectors = tasks.register<GenerateCrossingVectors>("generateCrossingV
     outputDirectory.set(layout.buildDirectory.dir("generated/crossingResources"))
 }
 compose.resources {
-    // asset fixtures of the Android host tests (non-ASCII names) are used by the desktop tests, too
-    customDirectory(
-        sourceSetName = "desktopTest",
-        directoryProvider = provider { layout.projectDirectory.dir("src/androidHostTest/assets/composeResources/de.westnordost.streetcomplete.resources") }
-    )
     customDirectory(
         sourceSetName = "desktopMain",
         directoryProvider = crossingVectors.flatMap { it.outputDirectory }
