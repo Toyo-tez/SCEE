@@ -3,6 +3,7 @@ package de.westnordost.streetcomplete.quests.elevator_bicycle_access
 import de.westnordost.streetcomplete.ApplicationConstants.EE_QUEST_OFFSET
 import de.westnordost.streetcomplete.Prefs
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAdd
+import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
 import de.westnordost.streetcomplete.quests.answerAppliedTo
 import de.westnordost.streetcomplete.quests.elevator_bicycle_access.ElevatorBicycleAccessAnswer.*
 import de.westnordost.streetcomplete.testutils.TestMapDataWithGeometry
@@ -93,6 +94,49 @@ class AddElevatorBicycleAccessTest {
             setOf(StringMapEntryAdd("access", "private")),
             questType.answerAppliedTo(PRIVATE, mapOf("highway" to "elevator", "incline" to "up")),
         )
+    }
+
+    // QUEST-027 audit: PRIVATE maps to general access=private (UI: entire elevator private), not bicycle=private.
+    @Test fun `private answer on public elevator without bicycle tag sets access only`() {
+        assertEquals(
+            setOf(StringMapEntryAdd("access", "private")),
+            questType.answerAppliedTo(PRIVATE, mapOf("highway" to "elevator")),
+        )
+    }
+
+    @Test fun `private answer overwrites explicit access yes`() {
+        assertEquals(
+            setOf(StringMapEntryModify("access", "yes", "private")),
+            questType.answerAppliedTo(PRIVATE, mapOf("highway" to "elevator", "access" to "yes")),
+        )
+    }
+
+    @Test fun `yes and no answers preserve existing access tags`() {
+        val base = mapOf("highway" to "elevator", "access" to "yes", "foot" to "yes")
+        assertEquals(
+            setOf(StringMapEntryAdd("bicycle", "yes")),
+            questType.answerAppliedTo(YES, base),
+        )
+        assertEquals(
+            setOf(StringMapEntryAdd("bicycle", "no")),
+            questType.answerAppliedTo(NO, base),
+        )
+    }
+
+    @Test fun `not applicable when bicycle already restricted`() {
+        val mapData = TestMapDataWithGeometry(
+            listOf(
+                node(1, tags = mapOf("highway" to "elevator", "bicycle" to "private")),
+                node(2, tags = mapOf("highway" to "elevator", "bicycle" to "no")),
+            ),
+        )
+        assertEquals(0, questType.getApplicableElements(mapData).count())
+    }
+
+    @Test fun `not applicable after private answer tags applied`() {
+        val tags = mapOf("highway" to "elevator", "access" to "private")
+        val mapData = TestMapDataWithGeometry(listOf(node(1, tags = tags), way(2, tags = tags)))
+        assertEquals(0, questType.getApplicableElements(mapData).count())
     }
 
     @Test fun `form uses one-click answers without ok button`() {
