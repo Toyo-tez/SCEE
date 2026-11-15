@@ -3,6 +3,7 @@ package de.westnordost.streetcomplete.quests.opening_hours
 import de.westnordost.osm_opening_hours.model.ClockTime
 import de.westnordost.osm_opening_hours.model.TimeSpan
 import de.westnordost.osm_opening_hours.model.Weekday
+import de.westnordost.streetcomplete.Prefs
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryAdd
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapEntryModify
 import de.westnordost.streetcomplete.osm.nowAsCheckDateString
@@ -13,9 +14,11 @@ import de.westnordost.streetcomplete.osm.opening_hours.Weekdays
 import de.westnordost.streetcomplete.osm.toCheckDate
 import de.westnordost.streetcomplete.quests.answerApplied
 import de.westnordost.streetcomplete.quests.answerAppliedTo
+import de.westnordost.streetcomplete.testutils.inMemoryPrefs
 import de.westnordost.streetcomplete.testutils.node
 import de.westnordost.streetcomplete.util.ktx.nowAsEpochMilliseconds
 import de.westnordost.streetcomplete.util.ktx.toEpochMilli
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -23,7 +26,12 @@ import kotlin.test.assertTrue
 
 class AddOpeningHoursTest {
 
-    private val questType = AddOpeningHours()
+    private lateinit var questType: AddOpeningHours
+
+    @BeforeTest fun setUp() {
+        Prefs.preferences = inMemoryPrefs()
+        questType = AddOpeningHours()
+    }
 
     @Test fun `apply description answer`() {
         assertEquals(
@@ -401,6 +409,62 @@ class AddOpeningHoursTest {
                 timestamp = "2000-11-11".toCheckDate()?.toEpochMilli()
             )
         ))
+    }
+
+    @Test fun `unchanged opening hours preserves unsupported but valid expression`() {
+        val expression = "24/7"
+        assertEquals(
+            setOf(
+                StringMapEntryModify("opening_hours", expression, expression),
+                StringMapEntryAdd("check_date:opening_hours", nowAsCheckDateString())
+            ),
+            questType.answerAppliedTo(
+                UnchangedOpeningHours(expression),
+                mapOf("opening_hours" to expression)
+            )
+        )
+    }
+
+    @Test fun `unchanged opening hours preserves complex valid expression`() {
+        val expression = "Mo-Fr 09:00-18:00; PH off"
+        assertEquals(
+            setOf(
+                StringMapEntryModify("opening_hours", expression, expression),
+                StringMapEntryAdd("check_date:opening_hours", nowAsCheckDateString())
+            ),
+            questType.answerAppliedTo(
+                UnchangedOpeningHours(expression),
+                mapOf("opening_hours" to expression)
+            )
+        )
+    }
+
+    @Test fun `unchanged opening hours preserves quoted description`() {
+        val expression = "\"by appointment, see timetable\""
+        assertEquals(
+            setOf(
+                StringMapEntryModify("opening_hours", expression, expression),
+                StringMapEntryAdd("check_date:opening_hours", nowAsCheckDateString())
+            ),
+            questType.answerAppliedTo(
+                UnchangedOpeningHours(expression),
+                mapOf("opening_hours" to expression)
+            )
+        )
+    }
+
+    @Test fun `unchanged answer leaves unrelated tags`() {
+        val changes = questType.answerAppliedTo(
+            UnchangedOpeningHours("24/7"),
+            mapOf(
+                "opening_hours" to "24/7",
+                "name" to "Shop",
+                "check_date" to "2020-01-01",
+            )
+        )
+        assertTrue(changes.any { it.key == "opening_hours" })
+        assertTrue(changes.any { it.key == "check_date:opening_hours" })
+        assertFalse(changes.any { change -> change.key == "name" })
     }
 
     @Test fun `isApplicableTo returns false for valid but not supported opening hours with ranges that are also colliding`() {

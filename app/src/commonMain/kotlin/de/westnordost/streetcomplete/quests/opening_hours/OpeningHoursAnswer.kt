@@ -8,3 +8,5 @@ data class RegularOpeningHours(val hours: HierarchicOpeningHours) : OpeningHours
 data object AlwaysOpen : OpeningHoursAnswer
 data class DescribeOpeningHours(val text: String) : OpeningHoursAnswer
 data object NoOpeningHoursSign : OpeningHoursAnswer
+/** Existing opening hours confirmed unchanged (also when the form cannot represent them). */
+data class UnchangedOpeningHours(val openingHours: String) : OpeningHoursAnswer

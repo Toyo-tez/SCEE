@@ -3,7 +3,9 @@ package de.westnordost.streetcomplete.osm.opening_hours
 import de.westnordost.osm_opening_hours.parser.toOpeningHoursOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class OpeningHoursParserAndGeneratorTest {
 
@@ -266,6 +268,12 @@ class OpeningHoursParserAndGeneratorTest {
     private fun parse(oh: String, allowTimePoints: Boolean): HierarchicOpeningHours? =
         oh.toOpeningHoursOrNull(lenient = true)
             ?.toHierarchicOpeningHours(allowTimePoints)
+
+    @Test fun `isValidButUnrepresentableOpeningHours`() {
+        assertFalse("Mo-Fr 08:00-18:00; PH off".isValidButUnrepresentableOpeningHours())
+        assertTrue("24/7".isValidButUnrepresentableOpeningHours())
+        assertFalse("not valid at all".isValidButUnrepresentableOpeningHours())
+    }
 
     private fun reject(oh: String, allowTimePoints: Boolean = false) {
         assertNull(parse(oh, allowTimePoints))

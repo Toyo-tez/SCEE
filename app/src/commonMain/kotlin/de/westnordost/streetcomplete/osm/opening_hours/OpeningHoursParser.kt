@@ -1,6 +1,7 @@
 package de.westnordost.streetcomplete.osm.opening_hours
 
 import de.westnordost.osm_opening_hours.model.OpeningHours
+import de.westnordost.osm_opening_hours.parser.toOpeningHoursOrNull
 import de.westnordost.osm_opening_hours.model.Range
 import de.westnordost.osm_opening_hours.model.RuleType
 import de.westnordost.osm_opening_hours.model.TimesSelector
@@ -61,3 +62,12 @@ fun OpeningHours.toHierarchicOpeningHours(
 
 private val RuleType.isClosed: Boolean get() =
     this == RuleType.Closed || this == RuleType.Off
+
+fun String.toRepresentableHierarchicOpeningHours(): HierarchicOpeningHours? =
+    toOpeningHoursOrNull(lenient = true)?.toHierarchicOpeningHours()
+
+/** Syntactically valid opening hours that the quest editor cannot display. */
+fun String.isValidButUnrepresentableOpeningHours(): Boolean {
+    val parsed = toOpeningHoursOrNull(lenient = true) ?: return false
+    return parsed.toHierarchicOpeningHours() == null
+}

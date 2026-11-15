@@ -234,10 +234,11 @@ mapOf(
             // don't delete current opening hours: these may be the correct hours, they are just not visible anywhere on the door
         } else {
             val openingHoursString = when (answer) {
-                is RegularOpeningHours  -> answer.hours.toOpeningHours().toString()
-                is AlwaysOpen           -> "24/7"
-                is DescribeOpeningHours -> "\"" + answer.text.replace("\"", "") + "\""
-                NoOpeningHoursSign      -> throw IllegalStateException()
+                is RegularOpeningHours      -> answer.hours.toOpeningHours().toString()
+                is AlwaysOpen               -> "24/7"
+                is DescribeOpeningHours     -> "\"" + answer.text.replace("\"", "") + "\""
+                is UnchangedOpeningHours    -> answer.openingHours
+                NoOpeningHoursSign          -> throw IllegalStateException()
             }
             tags.updateWithCheckDate("opening_hours", openingHoursString)
             if (tags["opening_hours:signed"] == "no") {
