@@ -140,23 +140,30 @@ private fun parseSettingsLines(list: List<String>): ParsedSettings? {
 
 private class Snapshot(private val prefs: Preferences) {
     private val previous = mutableMapOf<String, Any?>()
+    private val absentBeforeImport = mutableSetOf<String>()
 
     fun remember(key: String) {
-        if (key in previous) return
-        previous[key] = if (prefs.contains(key)) prefs.all[key] else null
+        if (key in previous || key in absentBeforeImport) return
+        if (prefs.contains(key)) {
+            previous[key] = prefs.all[key]
+        } else {
+            absentBeforeImport += key
+        }
     }
 
     fun rollback(keys: Collection<String>) {
         for (key in keys) {
-            val value = previous[key] ?: continue
-            when (value) {
-                null -> prefs.remove(key)
-                is Boolean -> prefs.putBoolean(key, value)
-                is Int -> prefs.putInt(key, value)
-                is Long -> prefs.putLong(key, value)
-                is Float -> prefs.putFloat(key, value)
-                is String -> prefs.putString(key, value)
-                else -> prefs.remove(key)
+            when {
+                key in absentBeforeImport -> prefs.remove(key)
+                key in previous -> when (val value = previous[key]) {
+                    null -> prefs.remove(key)
+                    is Boolean -> prefs.putBoolean(key, value)
+                    is Int -> prefs.putInt(key, value)
+                    is Long -> prefs.putLong(key, value)
+                    is Float -> prefs.putFloat(key, value)
+                    is String -> prefs.putString(key, value)
+                    else -> prefs.remove(key)
+                }
             }
         }
     }

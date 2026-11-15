@@ -122,4 +122,22 @@ class SettingsImportExportTest {
         assertTrue(target.expertMode)
         assertEquals(15, target.getInt(Prefs.LOCATION_INTERVAL, 0))
     }
+
+    @Test fun `write failure removes keys that did not exist before import`() {
+        val backing = SnapshotMapSettings(mutableMapOf(Prefs.EXPERT_MODE to true))
+        val failing = object : ObservableSettings by backing {
+            override fun putInt(key: String, value: Int) = error("injected")
+        }
+        val target = Preferences(object : de.westnordost.streetcomplete.data.preferences.SettingsWithSnapshot,
+            ObservableSettings by failing {
+            override val all: Map<String, *> get() = backing.all
+        })
+        val lines = listOf(
+            "boolean settings", """{"expert_mode":false}""",
+            "int settings", """{"gps_interval":99}""",
+        )
+        assertFalse(readToSettings(lines, target))
+        assertTrue(target.expertMode)
+        assertFalse(target.contains(Prefs.LOCATION_INTERVAL))
+    }
 }
