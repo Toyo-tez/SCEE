@@ -1,5 +1,6 @@
 package de.westnordost.streetcomplete.quests.building_levels
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -7,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.osm.osmquests.Answer
@@ -14,6 +17,8 @@ import de.westnordost.streetcomplete.data.osm.osmquests.QuestAction
 import de.westnordost.streetcomplete.data.preferences.Preferences
 import de.westnordost.streetcomplete.data.preferences.addLastPicked
 import de.westnordost.streetcomplete.data.preferences.getLastPicked
+import de.westnordost.streetcomplete.osm.isUnrepresentableBuildingLevels
+import de.westnordost.streetcomplete.osm.parseRepresentableBuildingLevels
 import de.westnordost.streetcomplete.quests.questPrefix
 import de.westnordost.streetcomplete.resources.*
 import de.westnordost.streetcomplete.ui.common.dialogs.InfoDialog
@@ -34,15 +39,16 @@ fun AddBuildingLevelsForm(
     val lastPicked = remember {
         preferences.getLastPicked<BuildingLevels>(key)
             .takeFavorites(n = 5, history = 15, first = 1)
-            .sortedWith(compareBy<BuildingLevels> { it.levels }.thenBy { it.roofLevels })
+            .sortedWith(compareBy<BuildingLevels>({ it.levels ?: Int.MAX_VALUE }, { it.roofLevels }))
+            .filter { it.levels != null }
     }
 
-    val originalLevels = remember(element) {
-        element.tags["building:levels"]?.toIntOrNull()?.takeIf { it >= 0 }
-    }
-    val originalRoofLevels = remember(element) {
-        element.tags["roof:levels"]?.toIntOrNull()?.takeIf { it >= 0 }
-    }
+    val originalBuildingLevelsRaw = remember(element) { element.tags["building:levels"] }
+    val originalRoofLevelsRaw = remember(element) { element.tags["roof:levels"] }
+    val originalLevels = remember(element) { originalBuildingLevelsRaw.parseRepresentableBuildingLevels() }
+    val originalRoofLevels = remember(element) { originalRoofLevelsRaw.parseRepresentableBuildingLevels() }
+    val unparsedBuildingLevels = remember(element) { originalBuildingLevelsRaw.isUnrepresentableBuildingLevels() }
+    val unparsedRoofLevels = remember(element) { originalRoofLevelsRaw.isUnrepresentableBuildingLevels() }
 
     var levels by rememberSaveable(originalLevels) { mutableStateOf(originalLevels) }
     var roofLevels by rememberSaveable(originalRoofLevels) { mutableStateOf(originalRoofLevels) }
@@ -58,13 +64,25 @@ fun AddBuildingLevelsForm(
 
     val isBuildingPart = element.tags.containsKey("building:part")
 
+    val needsBuildingLevelsInput = originalLevels == null && !unparsedBuildingLevels
+    val buildingInputSatisfied = levels != null || !needsBuildingLevelsInput
+    val roofInputSatisfied = roofLevelsAreOptional || roofLevels != null
+
+    val writesBuildingLevels = levels != null && (unparsedBuildingLevels || levels != originalLevels)
+    val writesRoofLevels = roofLevels != null && (unparsedRoofLevels || roofLevels != originalRoofLevels)
+
     QuestForm(
         on = on,
-        isComplete = levels != null && (roofLevelsAreOptional || roofLevels != null),
-        hasChanges = levels != originalLevels || roofLevels != originalRoofLevels,
+        isComplete = buildingInputSatisfied && roofInputSatisfied,
+        hasChanges = writesBuildingLevels || writesRoofLevels,
         onClickOk = {
-            val answer = BuildingLevels(levels!!, roofLevels)
-            preferences.addLastPicked(key, answer)
+            val answer = BuildingLevels(
+                levels = if (writesBuildingLevels) levels else null,
+                roofLevels = if (writesRoofLevels) roofLevels else null,
+            )
+            if (answer.levels != null) {
+                preferences.addLastPicked(key, answer.copy(roofLevels = answer.roofLevels ?: roofLevels))
+            }
             on(Answer(answer))
         },
         title = stringResource(
@@ -77,6 +95,24 @@ fun AddBuildingLevelsForm(
             }
         ) },
     ) {
+        if (unparsedBuildingLevels) {
+            Text(
+                stringResource(
+                    Res.string.quest_buildingLevels_unparsed_levels,
+                    originalBuildingLevelsRaw!!
+                ),
+                Modifier.padding(bottom = 8.dp),
+            )
+        }
+        if (unparsedRoofLevels) {
+            Text(
+                stringResource(
+                    Res.string.quest_buildingLevels_unparsed_roof_levels,
+                    originalRoofLevelsRaw!!
+                ),
+                Modifier.padding(bottom = 8.dp),
+            )
+        }
         BuildingLevelsForm(
             levels = levels,
             onLevelsChange = { levels = it },

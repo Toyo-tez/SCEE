@@ -128,7 +128,7 @@ fun BuildingLevelsForm(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            BuildingLevelsButtonContent(it.levels, it.roofLevels)
+            BuildingLevelsButtonContent(it.levels!!, it.roofLevels)
         }
     }
 }

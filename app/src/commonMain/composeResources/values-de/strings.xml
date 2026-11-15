@@ -1046,6 +1046,9 @@ Alternativ kann auch ein Hinweis (mit Foto) hinterlassen werden.</string>
     <string name="quest_lit_title">Ist es hier beleuchtet?</string>
     <string name="quest_openingHours_title">Was sind die Öffnungszeiten von diesem Ort?</string>
     <string name="quest_openingHours_signed_title">Sind die Öffnungszeiten dieses Ortes ausgeschildert?</string>
+    <string name="quest_openingHours_unrepresentable_explanation">Die vorhandenen Öffnungszeiten können in diesem Editor nicht angezeigt werden.</string>
+    <string name="quest_openingHours_stored_value">Gespeicherter Wert: %1$s</string>
+    <string name="quest_openingHours_malformed_or_unrepresentable_note">Gespeicherter Wert: %1$s. Nutze die Beschreibungsantwort oder den Tag-Editor, wenn er unten nicht eingegeben werden kann.</string>
     <string name="quest_placeName_title">Was ist der Name hiervon?</string>
     <string name="quest_shop_type_title2">Was für ein Laden ist das?</string>
     <string name="quest_smoking_title2">Ist Rauchen hier erlaubt?</string>
@@ -1332,6 +1335,8 @@ Du kannst Informationen zu Spenden auf unserer Website oder Projektseite finden.
     <string name="quest_buildingLevels_hint">Bei Gebäuden in Hanglage beginnt die Zählung der Stockwerke mit dem Bodenniveau des untersten Stockwerks.
 
 Ein Stockwerk zählt als Dachgeschoss, wenn sich die Fenster im Dach befinden. Dächer mit null Dachgeschossen sind also nicht unbedingt flach, sondern nur nicht hoch genug für ein ganzes Stockwerk.</string>
+    <string name="quest_buildingLevels_unparsed_levels">Die gespeicherte Stockwerkanzahl (%1$s) kann hier nicht angezeigt werden. Feld leer lassen, um sie beizubehalten, oder eine neue ganze Zahl eingeben, um sie zu ersetzen.</string>
+    <string name="quest_buildingLevels_unparsed_roof_levels">Die gespeicherte Zahl der Dachgeschosse (%1$s) kann hier nicht angezeigt werden. Feld leer lassen, um sie beizubehalten, oder eine neue ganze Zahl eingeben, um sie zu ersetzen.</string>
     <string name="quest_parcel_locker_brand">Was ist die Marke dieser Packstation?</string>
     <string name="quest_powerPolesMaterial_is_terminal">Stromleitung ist am Gebäude befestigt</string>
     <string name="quest_cycleway_value_sidewalk_ok">Keiner, aber ein Schild erlaubt Radfahren auf dem Bürgersteig</string>

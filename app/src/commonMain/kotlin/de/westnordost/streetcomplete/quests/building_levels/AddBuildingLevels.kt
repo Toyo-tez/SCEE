@@ -59,8 +59,26 @@ class AddBuildingLevels : OsmFilterQuestType<BuildingLevels>() {
     }
 
     override fun applyAnswerTo(answer: BuildingLevels, tags: Tags, geometry: ElementGeometry, timestampEdited: Long) {
-        tags["building:levels"] = answer.levels.toString()
-        answer.roofLevels?.let { tags["roof:levels"] = it.toString() }
+        var wroteAny = false
+        answer.levels?.let { levels ->
+            require(levels >= 0) { "building:levels must be a non-negative integer" }
+            val value = levels.toString()
+            if (tags["building:levels"] != value) {
+                tags["building:levels"] = value
+                wroteAny = true
+            }
+        }
+        answer.roofLevels?.let { roofLevels ->
+            require(roofLevels >= 0) { "roof:levels must be a non-negative integer" }
+            val value = roofLevels.toString()
+            if (tags["roof:levels"] != value) {
+                tags["roof:levels"] = value
+                wroteAny = true
+            }
+        }
+        require(wroteAny) {
+            "answer must change at least one of building:levels or roof:levels"
+        }
     }
 
     override val hasQuestSettings = true

@@ -900,6 +900,8 @@
     <string name="quest_buildingLevels_answer_multipleLevels">Differs per building part</string>
     <string name="quest_buildingLevels_answer_description">In this case, simply input the values of the highest building part.</string>
     <string name="quest_buildingLevels_hint">For buildings on a slope, the level count starts from the ground level of the lowest side.\n\nA level counts as a roof level when its windows are in the roof. Subsequently, roofs with zero roof levels are not necessarily flat, just not tall enough for an entire level.</string>
+    <string name="quest_buildingLevels_unparsed_levels">The mapped building level count (%1$s) cannot be shown here. Leave the field empty to keep it, or enter a new integer to replace it.</string>
+    <string name="quest_buildingLevels_unparsed_roof_levels">The mapped roof level count (%1$s) cannot be shown here. Leave the field empty to keep it, or enter a new integer to replace it.</string>
     <string name="quest_buildingType_title">What kind of building is this?</string>
     <string name="quest_generic_item_invalid_value">Please select a more specific value.</string>
     <string name="quest_buildingType_answer_multiple_types">It has multiple purposes</string>
@@ -1331,6 +1333,9 @@
 
     <string name="quest_openingHours_title">What are the opening hours here?</string>
     <string name="quest_openingHours_signed_title">Are the opening hours here signed?</string>
+    <string name="quest_openingHours_unrepresentable_explanation">The existing opening hours cannot be displayed in this editor.</string>
+    <string name="quest_openingHours_stored_value">Current value: %1$s</string>
+    <string name="quest_openingHours_malformed_or_unrepresentable_note">Mapped value: %1$s. Use the description answer or tag editor if it cannot be entered below.</string>
     <string name="quest_openingHours_start_time">Start time</string>
     <string name="quest_openingHours_end_time">End time</string>
     <string name="quest_openingHours_add_months">Add months</string>
