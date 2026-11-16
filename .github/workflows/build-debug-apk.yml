@@ -41,7 +41,7 @@ jobs:
         run: mv androidApp/build/outputs/apk/debug/androidApp-debug.apk androidApp/build/outputs/apk/debug/SCEE-debug-$COMMIT_SHA.apk
 
       - name: Archive APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: StreetComplete-debug-apk-${{ env.COMMIT_SHA }}
           path: androidApp/build/outputs/apk/debug/*.apk
