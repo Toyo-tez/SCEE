@@ -1,0 +1,79 @@
+name: Dependency submission (PR)
+
+# Submits the dependency graph that "Dependency submission" generated for a pull request.
+# Runs from the default branch with a write token but NEVER checks out or executes PR code.
+# Works for same-repo (Renovate) and fork PRs. PR content is treated as untrusted:
+#  - only successful pull_request runs of dependency-submission.yml in THIS repository are processed
+#  - the uploaded graph is downloaded by run id and its commit sha must equal the run's head sha,
+#    so a graph cannot be attached to another commit (e.g. the base branch)
+#  - the submit step downloads again, bound to the triggering run id (gradle/actions, findBy workflowRunId)
+# Note: workflow_run workflows only fire once this file exists on the default branch (SCEE-mc).
+
+on:
+  workflow_run:
+    workflows: ["Dependency submission"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-submission-pr-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify dependency graph artifact
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.path, '.github/workflows/dependency-submission.yml') &&
+      github.event.workflow_run.repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Download graph artifact of the triggering run
+        uses: actions/download-artifact@v8.0.2
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/graph
+
+      - name: Verify graph belongs to the PR head commit
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          GRAPH_DIR: ${{ runner.temp }}/graph
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS= read -r -d '' f; do
+            count=$((count + 1))
+            sha=$(jq -er '.sha' "$f")
+            if [[ "$sha" != "$HEAD_SHA" ]]; then
+              echo "Graph sha does not match the PR head commit; refusing to submit." >&2
+              exit 1
+            fi
+          done < <(find "$GRAPH_DIR" -type f -name '*.json' -print0)
+          if [[ "$count" -eq 0 ]]; then
+            echo "No dependency graph JSON found in the artifact." >&2
+            exit 1
+          fi
+          echo "Verified ${count} graph file(s) for ${HEAD_SHA}."
+
+  submit-pr:
+    name: Submit dependency graph (PR)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download and submit dependency graph
+        uses: gradle/actions/dependency-submission@v6.4.1
+        with:
+          dependency-graph: download-and-submit

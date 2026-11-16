@@ -56,6 +56,10 @@ jobs:
           set -euo pipefail
           VERSION_NAME=$(grep -E '^app\.streetcomplete\.versionName=' gradle.properties | cut -d= -f2- | tr -d '\r')
           SHORT_SHA=$(git log -n 1 --format='%h')
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" != "v${VERSION_NAME}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match versionName v${VERSION_NAME} in gradle.properties." >&2
+            exit 1
+          fi
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             TAG_NAME="${GITHUB_REF_NAME}"
             ASSET_STEM="SCEE-mc-${TAG_NAME}"

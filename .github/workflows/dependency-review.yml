@@ -1,0 +1,77 @@
+name: Dependency review
+
+# Checks dependency changes in PRs (incl. Renovate) against the GitHub Advisory Database.
+# Runs on EVERY PR against SCEE-mc so the check name is stable (usable as required check).
+# - Actions/other manifest changes are reviewed immediately.
+# - If the PR touches Gradle dependency inputs, the review first waits for the Gradle dependency
+#   graph of the PR head commit (dependency-submission.yml -> dependency-submission-pr.yml) and
+#   FAILS if that submission fails or does not arrive in time, so a missing snapshot is never a pass.
+# Base commits always have a snapshot (dependency-submission.yml runs on every push to SCEE-mc).
+# The regex below must stay in sync with the paths of dependency-submission.yml (pull_request).
+
+on:
+  pull_request:
+    branches:
+      - "SCEE-mc"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    steps:
+      - name: Detect Gradle dependency changes
+        id: gradle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          files=$(gh api --paginate "repos/${REPO}/pulls/${PR_NUMBER}/files" --jq '.[].filename')
+          if grep -Eq '^(gradle/libs\.versions\.toml|gradle/wrapper/.*|gradle\.properties|settings\.gradle\.kts|(.*/)?build\.gradle\.kts|buildSrc/.*|third_party/osmfeatures/.*|\.github/workflows/dependency-submission.*\.yml)$' <<<"${files}"; then
+            echo "needs_snapshot=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_snapshot=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for the Gradle dependency graph of the PR head
+        if: steps.gradle.outputs.needs_snapshot == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            result=$(gh api "repos/${REPO}/actions/workflows/dependency-submission-pr.yml/runs?head_sha=${HEAD_SHA}&per_page=1" \
+              --jq '.workflow_runs[0] | if . == null then "none" else "\(.status) \(.conclusion)" end')
+            echo "dependency-submission-pr.yml for ${HEAD_SHA}: ${result}"
+            case "${result}" in
+              "completed success") exit 0 ;;
+              "completed "*) echo "Dependency graph submission did not succeed; refusing to pass the review." >&2; exit 1 ;;
+            esac
+            sleep 20
+          done
+          echo "Timed out waiting for the Gradle dependency graph submission." >&2
+          exit 1
+
+      - uses: actions/dependency-review-action@v4.9.0
+        with:
+          fail-on-severity: high
+          # Only report licenses; do not fail on them (no restrictive allow/deny list).
+          fail-on-scopes: runtime
+          comment-summary-in-pr: never
+          retry-on-snapshot-warnings: ${{ steps.gradle.outputs.needs_snapshot }}
+          retry-on-snapshot-warnings-timeout: 300
