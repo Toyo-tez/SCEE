@@ -42,4 +42,5 @@ jobs:
           tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
 
       - name: Lint workflows
-        run: "${RUNNER_TEMP}/actionlint -color"
+        run: |
+          "${RUNNER_TEMP}/actionlint" -color
