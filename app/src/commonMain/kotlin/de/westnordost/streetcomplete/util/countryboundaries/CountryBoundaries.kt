@@ -17,6 +17,10 @@ interface CountryBoundaries {
 
     /** Whether the given bounding box [bbox] at least intersects with the given [countries] */
     fun intersects(bbox: BoundingBox, countries: Countries): Boolean
+
+    /** Returns the ids of the countries (and subdivisions) that are guaranteed to contain the whole
+     *  given bounding box [bbox] */
+    fun getContainingIds(bbox: BoundingBox): Set<String>
 }
 
 class CountryBoundariesImpl(
@@ -49,12 +53,12 @@ class CountryBoundariesImpl(
         is NoCountriesExcept -> getIntersectingIds(bbox).containsAny(countries.exceptions)
     }
 
-    private fun getContainingIds(bounds: BoundingBox): Set<String> =
+    override fun getContainingIds(bbox: BoundingBox): Set<String> =
         countryBoundaries.getContainingIds(
-            minLongitude = bounds.min.longitude,
-            minLatitude = bounds.min.latitude,
-            maxLongitude = bounds.max.longitude,
-            maxLatitude = bounds.max.latitude
+            minLongitude = bbox.min.longitude,
+            minLatitude = bbox.min.latitude,
+            maxLongitude = bbox.max.longitude,
+            maxLatitude = bbox.max.latitude
         )
 
     private fun getIntersectingIds(bounds: BoundingBox): Set<String> =

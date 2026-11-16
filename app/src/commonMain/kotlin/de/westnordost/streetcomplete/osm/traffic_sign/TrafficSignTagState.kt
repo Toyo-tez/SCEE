@@ -39,7 +39,11 @@ fun needsTrafficSignSurvey(tags: Map<String, String>): Boolean =
 
 /** Whether the way (center, first and last point) is completely in Germany. Ways that cross the
  *  border are excluded: their signs would partly be of another country, whose catalogue is not
- *  available. [getCountryCode] may return a subdivision code ("DE-BY"). */
+ *  available. [getCountryCode] may return a subdivision code ("DE-BY").
+ *
+ *  Only used by the AddTrafficSignType quest, whose applicability is deliberately left unchanged.
+ *  The traffic sign overlay uses the stricter [trafficSignWayCountry], which also looks at every
+ *  vertex and segment. */
 fun isWayInGermany(geometry: ElementGeometry?, getCountryCode: (LatLon) -> String?): Boolean {
     if (geometry !is ElementPolylinesGeometry) return false
     val line = geometry.polylines.singleOrNull() ?: return false
