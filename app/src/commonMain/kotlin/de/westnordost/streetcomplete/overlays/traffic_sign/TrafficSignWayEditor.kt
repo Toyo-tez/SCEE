@@ -49,6 +49,8 @@ import de.westnordost.streetcomplete.data.preferences.getLastPicked
 import de.westnordost.streetcomplete.data.preferences.setLastPicked
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignCombination
 import de.westnordost.streetcomplete.osm.traffic_sign.withPicked
+import de.westnordost.streetcomplete.osm.traffic_sign.isUsableWith
+import de.westnordost.streetcomplete.osm.traffic_sign.SUPPORTED_WAY_TRAFFIC_SIGNS
 import de.westnordost.streetcomplete.ui.common.last_picked.LastPickedChipsRow
 import org.koin.compose.koinInject
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignCatalogue
@@ -88,13 +90,15 @@ sealed interface TrafficSignCatalogueState {
     data class Ready(val catalogue: TrafficSignCatalogue) : TrafficSignCatalogueState
 }
 
-/** Loads the catalogue of [country] off the main thread (the first access loads it synchronously) */
+/** Loads the catalogue of [country] off the main thread (the first access loads it synchronously).
+ *  Loads again if [country] changes, e.g. when another element in another country is selected. */
 @Composable
 fun rememberTrafficSignCatalogueState(
     catalogues: TrafficSignCatalogues,
     country: String,
 ): TrafficSignCatalogueState {
-    val state by produceState<TrafficSignCatalogueState>(TrafficSignCatalogueState.Loading) {
+    val state by produceState<TrafficSignCatalogueState>(TrafficSignCatalogueState.Loading, catalogues, country) {
+        value = TrafficSignCatalogueState.Loading
         value = withContext(Dispatchers.Default) { catalogues.get(country) }
             ?.let { TrafficSignCatalogueState.Ready(it) } ?: TrafficSignCatalogueState.Failed
     }
@@ -248,7 +252,8 @@ fun TrafficSignWayEditor(
     var perDirection by rememberSaveable {
         mutableStateOf(state.original.forward.encode() != state.original.backward.encode())
     }
-    val lastPicked = remember { preferences.lastPickedTrafficSigns() }
+    // the history is shared by all countries: only what can be written in this country is offered
+    val lastPicked = remember(state.catalogue) { preferences.lastPickedTrafficSigns().filter { it.isUsableWith(state.catalogue) } }
     // like in the other forms (AddOnewayForm, SidepathChoiceGrid): the arrows in the form point the
     // way the way runs on the map, also if the map is rotated
     val geometryRotation = remember(geometry) { geometry.getOrientationOrZero() }
@@ -302,6 +307,10 @@ fun TrafficSignWayEditor(
             enabled = state.selection.forward != DirectionSelection.None || state.selection.backward != DirectionSelection.None,
         ) {
             Text(stringResource(Res.string.traffic_sign_overlay_none_both))
+        }
+        // countries without curated rules: say that nothing but the signs is tagged
+        if (state.catalogue.country !in SUPPORTED_WAY_TRAFFIC_SIGNS) {
+            Text(stringResource(Res.string.traffic_sign_overlay_signs_only), style = MaterialTheme.typography.caption)
         }
         // the tags that will be saved, always shown before the user confirms
         if (state.isEdited && (state.tagging.changes.isNotEmpty() || state.confirmationPreview.hasContent)) {
@@ -411,10 +420,17 @@ private fun DirectionRow(
     }
 }
 
-/** The signs of one direction (or of both), edited in place: no dialog in between, the catalogue is
- *  one tap away. "No signs" is a separate action of the editor, not an option of the picker. */
+/** The signs of one direction (or of both, or of a node), edited in place: no dialog in between, the
+ *  catalogue is one tap away. "No signs" is a separate action of the editor, not an option of the
+ *  picker.
+ *
+ *  Additional signs can only be added if the catalogue says which ones fit to which main signs
+ *  ([TrafficSignCatalogue.hasModifierCompatibility]), and signs that are not in the catalogue can only
+ *  be entered then: otherwise only the signs of the catalogue are offered, each as a main sign of its
+ *  own, so that no combination is made that nothing validates. Existing additional signs are shown
+ *  and can be removed in any case. */
 @Composable
-private fun SignsEditor(
+internal fun SignsEditor(
     catalogue: TrafficSignCatalogue,
     selection: DirectionSelection,
     hasExistingValue: Boolean,
@@ -431,6 +447,7 @@ private fun SignsEditor(
     fun setGroups(newGroups: List<TrafficSignGroup>) = onChange(
         newGroups.toValueOrNull(catalogue.country)?.let { DirectionSelection.Signed(it) } ?: DirectionSelection.NotSurveyed
     )
+    val allowsCombinations = catalogue.hasModifierCompatibility
     val isUnusual = groups.any { g ->
         val main = g.main?.sign
         main != null && g.modifiers.any { m -> m.sign != null && !m.sign.isCompatibleModifierOf(main) }
@@ -455,8 +472,10 @@ private fun SignsEditor(
         groups.forEachIndexed { index, group ->
             TrafficSignGroupImage(group, catalogue.country, signHeight = 64.dp)
             Row {
-                TextButton(onClick = { adding = index; showCatalogue = true }) {
-                    Text(stringResource(Res.string.traffic_sign_overlay_add_modifier))
+                if (allowsCombinations) {
+                    TextButton(onClick = { adding = index; showCatalogue = true }) {
+                        Text(stringResource(Res.string.traffic_sign_overlay_add_modifier))
+                    }
                 }
                 TextButton(onClick = { setGroups(groups.withoutGroup(index)) }) {
                     Text(stringResource(Res.string.traffic_sign_overlay_remove))
@@ -488,6 +507,7 @@ private fun SignsEditor(
             catalogue = catalogue,
             kind = if (target == null) TrafficSignPickerKind.MAIN else TrafficSignPickerKind.MODIFIER,
             main = mainSign,
+            allowCustomSigns = allowsCombinations,
             onDismiss = { showCatalogue = false },
             onPick = { part ->
                 showCatalogue = false

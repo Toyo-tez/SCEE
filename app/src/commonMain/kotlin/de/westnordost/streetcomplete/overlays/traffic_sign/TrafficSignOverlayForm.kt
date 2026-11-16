@@ -28,19 +28,19 @@ import de.westnordost.streetcomplete.ui.common.overlay.OverlayForm
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
-/** The only country for which the traffic sign editor (catalogue and rules to derive tags) exists */
-internal const val TRAFFIC_SIGN_EDITOR_COUNTRY = "DE"
-
-/** The traffic sign editor. Only to be shown for ways that lie completely in
- *  [TRAFFIC_SIGN_EDITOR_COUNTRY], see TrafficSignOverlay */
+/** The traffic sign editor with the catalogue of [country]. Only to be shown for ways that lie
+ *  completely in a country with a catalogue, see TrafficSignOverlay. Which tags other than
+ *  traffic_sign* are derived from the signs depends on the country (see WAY_RULES): for countries
+ *  without curated rules, only traffic_sign* is written. */
 @Composable
 fun TrafficSignOverlayForm(
     on: (OverlayAction) -> Unit,
     way: Way,
     geometry: ElementGeometry,
+    country: String,
     catalogues: TrafficSignCatalogues = koinInject(),
 ) {
-    when (val s = rememberTrafficSignCatalogueState(catalogues, TRAFFIC_SIGN_EDITOR_COUNTRY)) {
+    when (val s = rememberTrafficSignCatalogueState(catalogues, country)) {
         TrafficSignCatalogueState.Loading -> OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
             Text(stringResource(Res.string.traffic_sign_overlay_loading))
         }

@@ -5,6 +5,7 @@ import de.westnordost.streetcomplete.data.osm.geometry.ElementPolylinesGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.util.math.distanceTo
+import de.westnordost.streetcomplete.util.math.translate
 import kotlin.math.ceil
 
 /** In which country a way lies, as far as it can be told from the country boundaries of the app.
@@ -93,6 +94,28 @@ fun trafficSignWayCountry(
         others.isNotEmpty() -> TrafficSignWayCountry.CrossesBorder(others + country)
         unknown -> TrafficSignWayCountry.Uncertain(country)
         else -> TrafficSignWayCountry.Within(country)
+    }
+}
+
+/** Determine in which country a sign at [position] (a node) is, with the same certainty as for ways:
+ *  the position and the points [TRAFFIC_SIGN_SAMPLE_DISTANCE] meters to the north, east, south and
+ *  west of it must all be in the same country. A sign closer to a border than that (according to the
+ *  country boundaries of the app) is [TrafficSignWayCountry.CrossesBorder], one with an unknown
+ *  country around it [TrafficSignWayCountry.Uncertain]. Never uses the map center or GPS. */
+fun trafficSignNodeCountry(
+    position: LatLon?,
+    getCountryCode: (LatLon) -> String?,
+): TrafficSignWayCountry {
+    if (position == null) return TrafficSignWayCountry.Uncertain(null)
+    val points = listOf(position) + listOf(0.0, 90.0, 180.0, 270.0).map {
+        position.translate(TRAFFIC_SIGN_SAMPLE_DISTANCE, it)
+    }
+    val countries = points.map { getCountryCode(it)?.let(::countryOf) }
+    val known = countries.filterNotNull().toSet()
+    return when {
+        known.size > 1 -> TrafficSignWayCountry.CrossesBorder(known)
+        null in countries -> TrafficSignWayCountry.Uncertain(known.singleOrNull())
+        else -> TrafficSignWayCountry.Within(known.single())
     }
 }
 

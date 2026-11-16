@@ -532,6 +532,8 @@ val commonModule = module {
                 val countryBoundaries = get<Lazy<CountryBoundaries>>(named("CountryBoundariesLazy")).value
                 countryBoundaries.getContainingIds(bbox)
             },
+            // only reads the small index of the catalogues, no catalogue is loaded for this
+            { country -> get<TrafficSignCatalogues>().isAvailable(country) },
         )
     }
 

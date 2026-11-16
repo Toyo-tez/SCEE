@@ -540,8 +540,14 @@ private sealed interface WayRule {
     fun derive(tags: Map<String, String>, targetHighway: String?, notDerived: MutableList<TrafficSignNotDerived>): Derived?
 }
 
-/** The supported sign combinations (exactly one main sign with exactly these additional signs) of
- *  the German catalogue. Anything else is only recorded in traffic_sign. */
+/** The supported sign combinations (exactly one main sign with exactly these additional signs) per
+ *  country, from which other tags are derived. Anything else is only recorded in traffic_sign.
+ *
+ *  Only countries listed here get any derived tags: the signs of all other countries with a catalogue
+ *  are recorded in traffic_sign* only, and the tag recommendations of their catalogues are never
+ *  applied. Reviewed rules for another country can be added here with its ISO 3166-1 code as key
+ *  (and its signs in app/traffic-signs-update/rule-signs.txt); the import of the catalogues does not
+ *  need to change for that. */
 private val WAY_RULES: Map<String, Map<List<String>, WayRule>> = mapOf(
     "DE" to mapOf(
         listOf("237") to PathRule(PathSign.EXCLUSIVE_CYCLEWAY),
@@ -584,7 +590,9 @@ private fun TrafficSignValue.findRule(notDerived: MutableList<TrafficSignNotDeri
     } else {
         null
     }
-    if (rule == null) {
+    // for a country without any curated rules, only the signs are tagged: that is not a combination
+    // that is "not supported (yet)", there is just nothing to derive
+    if (rule == null && (country == null || country in WAY_RULES)) {
         notDerived.add(TrafficSignNotDerived(TrafficSignNotDerived.Reason.UNSUPPORTED_COMBINATION, toOsmValue()))
     }
     return rule

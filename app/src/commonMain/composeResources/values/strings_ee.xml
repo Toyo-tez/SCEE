@@ -917,7 +917,12 @@ Out of the box SCEE is configured to behave very similar to StreetComplete.</str
     <string name="traffic_sign_overlay_readonly_no_tags">There are no traffic sign tags.</string>
     <string name="traffic_sign_overlay_readonly_no_direction">General (key without direction)</string>
     <string name="traffic_sign_overlay_readonly_direction_tag">Direction, as tagged</string>
-    <string name="traffic_sign_overlay_readonly_node">Traffic signs on points are only shown here and cannot be edited in this overlay. Their tags are shown as they are.</string>
+    <string name="traffic_sign_overlay_readonly_node">The traffic signs of this point are tagged per direction (traffic_sign:forward or traffic_sign:backward). They are only shown here, as they are.</string>
+    <string name="traffic_sign_overlay_readonly_node_country">There is no traffic sign catalogue for the country of this point. Its traffic sign tags are only shown as they are.</string>
+    <string name="traffic_sign_overlay_readonly_node_uncertain">It cannot be determined reliably in which country this point lies, for example because it is close to a border. Therefore, its traffic signs cannot be edited here.</string>
+    <string name="traffic_sign_overlay_node_hint">Only traffic_sign of this point is changed. Its direction and all other tags stay as they are, and nothing is transferred to the road.</string>
+    <string name="traffic_sign_overlay_node_confirm_replace">Replace traffic_sign=%1$s with traffic_sign=%2$s?</string>
+    <string name="traffic_sign_overlay_signs_only">For this country, only the traffic signs are recorded. No other tags are derived from them.</string>
     <string name="traffic_sign_overlay_catalogue_missing">The traffic sign catalogue could not be loaded.</string>
     <string name="traffic_sign_overlay_loading">Loading traffic signs…</string>
     <string name="traffic_sign_overlay_direction_forward">Direction of the way</string>

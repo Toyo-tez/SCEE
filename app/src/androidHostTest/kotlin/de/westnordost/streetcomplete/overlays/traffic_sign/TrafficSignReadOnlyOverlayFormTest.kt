@@ -22,8 +22,7 @@ import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.at1
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.de1
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.de2
-import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.fr1
-import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.fr2
+import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.gb1
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.gb2
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestCountries.line
@@ -66,9 +65,11 @@ class TrafficSignReadOnlyOverlayFormTest {
         })
     }
 
+    // like the bundled catalogues: DE, FR and AT have one, GB has none
     private val overlay = TrafficSignOverlay(
         TrafficSignTestCountries.getCountryCode,
         TrafficSignTestCountries.getContainingCountryCodes,
+        hasCatalogue = { it in setOf("DE", "FR", "AT") },
     )
 
     private val actions = ArrayList<OverlayAction>()
@@ -99,15 +100,15 @@ class TrafficSignReadOnlyOverlayFormTest {
         compose.waitForIdle()
     }
 
-    @Test fun `way in France shows its tags as they are and saves nothing`() {
+    @Test fun `way in a country without catalogue shows its tags as they are and saves nothing`() {
         show(
-            mapOf("highway" to "residential", "traffic_sign" to "FR:B1", "traffic_sign:forward" to "FR:C12"),
-            line(fr1, fr2)
+            mapOf("highway" to "residential", "traffic_sign" to "GB:616", "traffic_sign:forward" to "GB:619"),
+            line(gb1, gb2)
         )
         compose.onNodeWithText("A complete traffic sign editor is not available for this country yet.", substring = true)
             .assertIsDisplayed()
-        compose.onNodeWithText("traffic_sign=FR:B1").assertIsDisplayed()
-        compose.onNodeWithText("traffic_sign:forward=FR:C12").assertIsDisplayed()
+        compose.onNodeWithText("traffic_sign=GB:616").assertIsDisplayed()
+        compose.onNodeWithText("traffic_sign:forward=GB:619").assertIsDisplayed()
         compose.onNodeWithText("General (key without direction)").assertIsDisplayed()
         compose.onNodeWithText("Direction of the way").assertIsDisplayed()
         compose.onNodeWithText("Split way").assertDoesNotExist()
@@ -140,7 +141,7 @@ class TrafficSignReadOnlyOverlayFormTest {
     @Test fun `node shows its traffic sign and direction tags as they are and saves nothing`() {
         val n = node(1, gb1, mapOf("traffic_sign" to "GB:616", "direction" to "forward", "highway" to "give_way"))
         show(n, ElementPointGeometry(gb1))
-        compose.onNodeWithText("Traffic signs on points are only shown here", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("There is no traffic sign catalogue for the country of this point", substring = true).assertIsDisplayed()
         compose.onNodeWithText("traffic_sign=GB:616").assertIsDisplayed()
         compose.onNodeWithText("direction=forward").assertIsDisplayed()
         compose.onNodeWithText("Direction, as tagged").assertIsDisplayed()
@@ -153,11 +154,19 @@ class TrafficSignReadOnlyOverlayFormTest {
         assertEquals(listOf<OverlayAction>(Action.EditTags), actions)
     }
 
-    @Test fun `node in Germany is read-only, too`() {
-        // there is no editor for signs on nodes, also not in Germany: no catalogue is needed
-        show(node(1, de1, mapOf("traffic_sign" to "stop")), ElementPointGeometry(de1))
-        compose.onNodeWithText("traffic_sign=stop").assertIsDisplayed()
-        compose.onNodeWithText("Traffic signs on points are only shown here", substring = true).assertIsDisplayed()
+    @Test fun `node in Germany with signs per direction is read-only`() {
+        // which direction they refer to would have to be interpreted: no catalogue is needed
+        show(node(1, de1, mapOf("traffic_sign:forward" to "DE:206", "traffic_sign" to "stop")), ElementPointGeometry(de1))
+        compose.onNodeWithText("traffic_sign:forward=DE:206").assertIsDisplayed()
+        compose.onNodeWithText("tagged per direction", substring = true).assertIsDisplayed()
+        assertEquals(emptyList(), actions)
+    }
+
+    @Test fun `node close to a border is read-only`() {
+        // about 7 m from the border between DE and AT (lon 10)
+        val p = LatLon(50.0, 9.9999)
+        show(node(1, p, mapOf("traffic_sign" to "DE:206")), ElementPointGeometry(p))
+        compose.onNodeWithText("It cannot be determined reliably in which country this point lies", substring = true).assertIsDisplayed()
         assertEquals(emptyList(), actions)
     }
 

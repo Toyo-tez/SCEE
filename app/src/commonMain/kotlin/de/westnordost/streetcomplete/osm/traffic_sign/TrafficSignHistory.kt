@@ -25,6 +25,20 @@ data class TrafficSignCombination(val forward: String, val backward: String) {
     }
 }
 
+/** Whether this combination can be offered for a way of the country of [catalogue]: the history is
+ *  shared by all countries, but signs of one country must never be written to a way in another one.
+ *  So every direction must be "not surveyed", "none" or signs that this catalogue reads (values of
+ *  other countries are unreadable for it). */
+fun TrafficSignCombination.isUsableWith(catalogue: TrafficSignCatalogue): Boolean {
+    val selection = toSelection(catalogue)
+    return TrafficSignDirection.entries.all { d ->
+        when (val s = selection[d]) {
+            is DirectionSelection.Signed -> !s.value.isUnparseable && (s.value.country == null || s.value.country == catalogue.country)
+            else -> true
+        }
+    }
+}
+
 const val TRAFFIC_SIGN_HISTORY_SIZE = 6
 
 /** [combination] first (most recent), without duplicates, at most [TRAFFIC_SIGN_HISTORY_SIZE] */
