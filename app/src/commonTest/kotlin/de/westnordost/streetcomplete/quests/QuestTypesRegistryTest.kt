@@ -15,6 +15,7 @@ import de.westnordost.streetcomplete.ui.util.measure.ArSupportChecker
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import de.westnordost.streetcomplete.quests.access_restriction.CheckAgriculturalAccess
 import de.westnordost.streetcomplete.quests.cycleway.AddCycleway
 import de.westnordost.streetcomplete.quests.sidepath_usage.AddSidepathUsage
 
@@ -80,6 +81,9 @@ class QuestTypesRegistryTest {
                 }
             )
 
+            val agriculturalAccess = registry.single { it is CheckAgriculturalAccess }
+            assertEquals(2435, registry.getOrdinalOf(agriculturalAccess))
+            assertEquals("AddMotorcycleParkingSurface", registry.single { registry.getOrdinalOf(it) == 200 }.name)
             val ordinals = registry.mapNotNull { registry.getOrdinalOf(it) }
             val duplicates = ordinals
                 .groupBy { it }

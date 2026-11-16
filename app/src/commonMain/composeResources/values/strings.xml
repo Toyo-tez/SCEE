@@ -1985,4 +1985,10 @@
     <string name="route_quests_confirmation_pending">Quest data incomplete – confirm download</string>
     <string name="route_quests_download_title">Download quest data?</string>
     <string name="route_quests_download_confirmation">Download up to %1$d additional tiles (about %2$d km²) in %3$d sequential downloads? Completed downloads are kept if cancelled.</string>
+    <string name="quest_accessRestriction_title">Which of these sign combinations applies to this entire road section in both directions?</string>
+    <string name="quest_accessRestriction_hint">Check the prohibition sign and all exception plates at both ends. Only choose an exact match, including the agricultural or forestry exception shown. Do not answer from the existing map tags. For different, missing, one-way-only or unclear signs, choose “None of these signs” or “Can’t say” to leave a note or hide the quest. Existing access restrictions and traffic_sign tags are preserved.</string>
+    <string name="quest_accessRestriction_no_vehicles">No vehicles, with this exception</string>
+    <string name="quest_accessRestriction_no_motor_vehicles">No motor vehicles, with this exception</string>
+    <string name="quest_accessRestriction_no_vehicles_bicycles">No vehicles, bicycles allowed, with this exception</string>
+    <string name="quest_accessRestriction_other">None of these signs</string>
 </resources>

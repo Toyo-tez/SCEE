@@ -15,6 +15,7 @@ import de.westnordost.streetcomplete.data.quest.QuestType
 import de.westnordost.streetcomplete.quests.payment.AddAcceptsCards
 import de.westnordost.streetcomplete.quests.payment.AddAcceptsCash
 import de.westnordost.streetcomplete.quests.access_point_ref.AddAccessPointRef
+import de.westnordost.streetcomplete.quests.access_restriction.CheckAgriculturalAccess
 import de.westnordost.streetcomplete.quests.address.AddAddressStreet
 import de.westnordost.streetcomplete.quests.address.AddHousenumber
 import de.westnordost.streetcomplete.quests.aerialway.AddAerialwayBicycleAccess
@@ -550,6 +551,7 @@ fun getQuestTypeList(
     95 to AddMaxPhysicalHeight(arSupportChecker), // same as above, best if it appears right after (if enabled)
     96 to AddRoadName(),
     97 to AddOneway(),
+    EE_QUEST_OFFSET + 213 to CheckAgriculturalAccess(), // Germany only; keep this serialization ID stable
     // 98 to AddSuspectedOneway(), - removed in https://github.com/streetcomplete/StreetComplete/pull/5725
 
     99 to AddEntrance(),

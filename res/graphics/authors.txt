@@ -301,6 +301,7 @@ italian police type/
 
 quest/
     access.svg                       modified by paulklie from parking_access.svg by Tobias Zwick (CC-BY-SA 4.0) with parts taken from EmojiOne 2: U+1F511 (CC-BY 4.0), resulting work is CC-BY-SA 4.0
+    access_restriction.svg           original quest icon for #6177, License: CC-BY-SA 4.0
     access_point.svg
     apple.svg
     artwork.svg

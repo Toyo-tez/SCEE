@@ -1,5 +1,7 @@
 package de.westnordost.streetcomplete.quests.contract
 
+import de.westnordost.streetcomplete.quests.access_restriction.AgriculturalAccessSign
+import de.westnordost.streetcomplete.quests.access_restriction.CheckAgriculturalAccess
 import de.westnordost.streetcomplete.quests.seating.AddSeating
 import de.westnordost.streetcomplete.quests.seating.Seating
 import de.westnordost.streetcomplete.quests.barrier_opening.AddBarrierOpening
@@ -17,6 +19,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 internal fun questContractFixtures(): List<QuestContract<*>> = buildList {
+    val access = CheckAgriculturalAccess()
+    for (value in listOf("agricultural", "forestry", "agricultural;forestry", "forestry;agricultural")) {
+        for (answer in AgriculturalAccessSign.entries) {
+            add(QuestContract(access, answer, mapOf("highway" to "track", "access" to value),
+                { access.isApplicableTo(way(nodes = listOf(1, 2, 3), tags = it)) }))
+        }
+    }
     val seating = AddSeating()
     for (value in listOf("garden", "terrace", "sidewalk;street", "separate")) {
         add(QuestContract(seating, Seating.INDOOR_AND_OUTDOOR,

@@ -1613,4 +1613,10 @@ Ansonsten kannst du auch eine andere Tastatur im App Store herunterladen. Auf An
     <string name="route_quests_confirmation_pending">Questdaten unvollständig – Download bestätigen</string>
     <string name="route_quests_download_title">Questdaten herunterladen?</string>
     <string name="route_quests_download_confirmation">Zusätzlich bis zu %1$d Kacheln (ca. %2$d km²) in %3$d aufeinanderfolgenden Downloads laden? Bereits geladene Daten bleiben bei Abbruch erhalten.</string>
+    <string name="quest_accessRestriction_title">Welche dieser Schilderkombinationen gilt für diesen gesamten Straßenabschnitt in beiden Richtungen?</string>
+    <string name="quest_accessRestriction_hint">Prüfe das Verbotsschild und alle Zusatzzeichen an beiden Enden. Wähle nur eine genau passende Kombination einschließlich der gezeigten land- oder forstwirtschaftlichen Ausnahme. Antworte nicht anhand der vorhandenen Kartendaten. Bei anderen, fehlenden, nur einseitig geltenden oder unklaren Schildern wähle „Keines dieser Schilder“ oder „Kann ich nicht sagen“, um eine Notiz zu erstellen oder die Aufgabe auszublenden. Bestehende spezifische Zugangsbeschränkungen und traffic_sign-Tags bleiben erhalten.</string>
+    <string name="quest_accessRestriction_no_vehicles">Keine Fahrzeuge, mit dieser Ausnahme</string>
+    <string name="quest_accessRestriction_no_motor_vehicles">Keine Kraftfahrzeuge, mit dieser Ausnahme</string>
+    <string name="quest_accessRestriction_no_vehicles_bicycles">Keine Fahrzeuge, Radverkehr frei, mit dieser Ausnahme</string>
+    <string name="quest_accessRestriction_other">Keines dieser Schilder</string>
 </resources>
