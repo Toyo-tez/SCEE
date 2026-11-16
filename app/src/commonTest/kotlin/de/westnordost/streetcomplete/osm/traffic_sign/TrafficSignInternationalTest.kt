@@ -2,6 +2,7 @@ package de.westnordost.streetcomplete.osm.traffic_sign
 
 import androidx.compose.ui.unit.Density
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapChangesBuilder
+import de.westnordost.streetcomplete.data.osm.geometry.ElementPointGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.data.traffic_signs.TrafficSignCatalogues
 import de.westnordost.streetcomplete.data.traffic_signs.indexJson
@@ -19,9 +20,14 @@ import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestData.RESOUR
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignTestData.bundledCatalogues
 import de.westnordost.streetcomplete.overlays.traffic_sign.TrafficSignOverlay
 import de.westnordost.streetcomplete.overlays.traffic_sign.isEditable
+import de.westnordost.streetcomplete.overlays.traffic_sign.newNodeUnavailableExplanation
 import de.westnordost.streetcomplete.overlays.traffic_sign.trafficSignReadOnlyStyle
 import de.westnordost.streetcomplete.overlays.traffic_sign.trafficSignWayStyle
+import de.westnordost.streetcomplete.resources.Res
+import de.westnordost.streetcomplete.resources.traffic_sign_overlay_create_node_country
+import de.westnordost.streetcomplete.resources.traffic_sign_overlay_create_node_uncertain
 import de.westnordost.streetcomplete.testutils.createMapData
+import de.westnordost.streetcomplete.testutils.node
 import de.westnordost.streetcomplete.testutils.way
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -382,5 +388,40 @@ class TrafficSignInternationalTest {
         assertEquals(TrafficSignWayCountry.CrossesBorder(setOf("DE", "AT")), trafficSignNodeCountry(LatLon(50.0, 9.9999), code))
         assertEquals(TrafficSignWayCountry.Uncertain(null), trafficSignNodeCountry(unknown1, code))
         assertEquals(TrafficSignWayCountry.Uncertain(null), trafficSignNodeCountry(null, code))
+    }
+
+    @Test fun `new nodes can be created, only where the position is certainly in a country with a catalogue`() {
+        val code = TrafficSignTestCountries.getCountryCode
+        val has = bundledCatalogues::isAvailable
+        val overlay = TrafficSignOverlay(code, TrafficSignTestCountries.getContainingCountryCodes, has)
+        assertTrue(overlay.isCreateNodeEnabled)
+        for (p in listOf(de1, at1, fr1)) assertTrue(isEditable(trafficSignNodeCountry(p, code), has), "$p")
+        // no catalogue, unknown country, near a border: nothing can be created, never a fallback to DE
+        for (p in listOf(gb1, unknown1, LatLon(50.0, 9.9999))) assertFalse(isEditable(trafficSignNodeCountry(p, code), has), "$p")
+        assertEquals(Res.string.traffic_sign_overlay_create_node_country, newNodeUnavailableExplanation(trafficSignNodeCountry(gb1, code), has))
+        assertEquals(Res.string.traffic_sign_overlay_create_node_uncertain, newNodeUnavailableExplanation(trafficSignNodeCountry(unknown1, code), has))
+        assertEquals(Res.string.traffic_sign_overlay_create_node_uncertain, newNodeUnavailableExplanation(trafficSignNodeCountry(LatLon(50.0, 9.9999), code), has))
+    }
+
+    @Test fun `a new node with only traffic_sign is shown in the overlay and can be edited again`() {
+        val overlay = TrafficSignOverlay(TrafficSignTestCountries.getCountryCode, TrafficSignTestCountries.getContainingCountryCodes, bundledCatalogues::isAvailable)
+        val created = node(-1, fr1, mapOf("traffic_sign" to "FR:B9b"))
+        val styled = overlay.getStyledElements(createMapData(mapOf(created to ElementPointGeometry(fr1)))).toList()
+        assertEquals(listOf(created), styled.map { it.first })
+        assertTrue(isTrafficSignNodeEditable(created.tags))
+        // a node without signs is not shown: nothing empty is ever offered
+        assertTrue(overlay.getStyledElements(createMapData(mapOf(node(-2, fr1) to ElementPointGeometry(fr1)))).none())
+    }
+
+    @Test fun `the value of a new node is only traffic_sign, written as read`() {
+        for ((country, value) in listOf("FR" to "FR:B9b", "DE" to "DE:206", "AT" to "AT:52.10a[30]")) {
+            val catalogue = catalogue(country)
+            val picked = DirectionSelection.Signed(parseTrafficSignValue(value, catalogue))
+            val change = trafficSignNodeChange(emptyMap(), DirectionSelection.NotSurveyed, picked)
+            assertEquals(TrafficSignTagChange.Set("traffic_sign", value, null), change, value)
+        }
+        // nothing picked: nothing to create
+        assertNull(trafficSignNodeChange(emptyMap(), DirectionSelection.NotSurveyed, DirectionSelection.NotSurveyed))
+        assertNull(trafficSignNodeChange(emptyMap(), DirectionSelection.NotSurveyed, DirectionSelection.None))
     }
 }

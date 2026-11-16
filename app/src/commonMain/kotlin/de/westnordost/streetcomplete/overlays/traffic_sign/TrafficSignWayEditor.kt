@@ -519,7 +519,7 @@ internal fun SignsEditor(
 
 /** The content of a chip for a previously used combination */
 @Composable
-private fun CombinationChip(combination: TrafficSignCombination, catalogue: TrafficSignCatalogue) {
+internal fun CombinationChip(combination: TrafficSignCombination, catalogue: TrafficSignCatalogue) {
     val selection = combination.toSelection(catalogue)
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
         val directions = if (combination.isSameInBothDirections) listOf(TrafficSignDirection.FORWARD) else TrafficSignDirection.entries
@@ -544,6 +544,13 @@ fun TrafficSignWayEditorState.rememberPicked(preferences: Preferences) {
     preferences.setLastPicked(HISTORY_KEY, preferences.lastPickedTrafficSigns().withPicked(combination))
 }
 
+
+/** Remembers the signs [encoded] (a traffic_sign value) of a new node for the next time, as the same
+ *  signs in both directions. Call when the user has saved, not on cancel. */
+fun Preferences.rememberPickedTrafficSign(encoded: String) {
+    if (encoded.isEmpty()) return
+    setLastPicked(HISTORY_KEY, lastPickedTrafficSigns().withPicked(TrafficSignCombination(encoded, encoded)))
+}
 
 /* ------------------------------------ tags that will be saved ------------------------------------ */
 

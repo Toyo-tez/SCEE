@@ -722,6 +722,9 @@
     <string name="traffic_sign_overlay_readonly_node_country">Für das Land dieses Punktes gibt es keinen Verkehrszeichenkatalog. Seine Verkehrszeichen-Tags werden nur so angezeigt, wie sie sind.</string>
     <string name="traffic_sign_overlay_readonly_node_uncertain">Es lässt sich nicht sicher feststellen, in welchem Land dieser Punkt liegt, zum Beispiel weil er nahe an einer Grenze liegt. Seine Verkehrszeichen können deshalb hier nicht bearbeitet werden.</string>
     <string name="traffic_sign_overlay_node_hint">Es wird nur traffic_sign dieses Punktes geändert. Seine Richtung und alle anderen Tags bleiben, wie sie sind, und es wird nichts auf die Straße übertragen.</string>
+    <string name="traffic_sign_overlay_create_node_hint">Es wird ein neuer Punkt nur mit traffic_sign genau an der Position des Fadenkreuzes angelegt. Es werden keine weiteren Tags hinzugefügt und nichts auf die Straße übertragen. Prüfe vorher, dass dieses Schild nicht schon in der Nähe erfasst ist.</string>
+    <string name="traffic_sign_overlay_create_node_country">Für das Land an der Position des Fadenkreuzes gibt es keinen Verkehrszeichenkatalog. Hier kann kein Verkehrszeichen hinzugefügt werden.</string>
+    <string name="traffic_sign_overlay_create_node_uncertain">Es lässt sich nicht sicher feststellen, in welchem Land die Position des Fadenkreuzes liegt, zum Beispiel weil sie nahe an einer Grenze liegt. Hier kann deshalb kein Verkehrszeichen hinzugefügt werden.</string>
     <string name="traffic_sign_overlay_node_confirm_replace">traffic_sign=%1$s durch traffic_sign=%2$s ersetzen?</string>
     <string name="traffic_sign_overlay_signs_only">Für dieses Land werden nur die Verkehrszeichen erfasst. Es werden keine weiteren Tags daraus abgeleitet.</string>
     <string name="traffic_sign_overlay_catalogue_missing">Der Verkehrszeichenkatalog konnte nicht geladen werden.</string>

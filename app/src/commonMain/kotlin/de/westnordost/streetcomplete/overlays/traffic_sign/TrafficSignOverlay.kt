@@ -40,7 +40,9 @@ import de.westnordost.streetcomplete.util.ktx.isArea
  *  - nodes with traffic sign tags that are not only none/no, in any country: shown as a neutral
  *    point. Nodes without them are not shown, so nothing is said about completeness. Their
  *    traffic_sign=* can be edited if they lie certainly in a country with a catalogue (see
- *    [trafficSignNodeCountry]) and are not tagged per direction; otherwise they are read-only. */
+ *    [trafficSignNodeCountry]) and are not tagged per direction; otherwise they are read-only.
+ *  - new nodes: created at the crosshair with only traffic_sign=*, if that position lies certainly in a
+ *    country with a catalogue (same check as for existing nodes); otherwise nothing can be created. */
 class TrafficSignOverlay(
     /** returns the ISO 3166-1 or -2 code of the smallest region at the given position */
     private val getCountryCodeByLocation: (LatLon) -> String?,
@@ -55,6 +57,8 @@ class TrafficSignOverlay(
     override val icon = Res.drawable.quest_traffic_sign
     override val changesetComment = "Survey traffic signs"
     override val wikiLink: String = "Key:traffic_sign"
+    /** new nodes with traffic signs at the crosshair, like in the things overlay, see Form */
+    override val isCreateNodeEnabled = true
 
     override fun getStyledElements(mapData: MapDataWithGeometry): Sequence<Pair<Element, OverlayStyle>> =
         getStyledWays(mapData) + getStyledNodes(mapData)
@@ -102,6 +106,16 @@ class TrafficSignOverlay(
                     TrafficSignNodeOverlayForm(on, element, (country as TrafficSignWayCountry.Within).country)
                 } else {
                     TrafficSignReadOnlyNodeOverlayForm(on, element, country, hasCatalogue)
+                }
+            }
+            // a new node at the crosshair: decided by that position only, like for existing nodes
+            null -> {
+                val position = geometry.center
+                val country = remember(position) { trafficSignNodeCountry(position, getCountryCodeByLocation) }
+                if (isEditable(country, hasCatalogue)) {
+                    TrafficSignNewNodeOverlayForm(on, position, (country as TrafficSignWayCountry.Within).country)
+                } else {
+                    TrafficSignNewNodeUnavailableForm(on, newNodeUnavailableExplanation(country, hasCatalogue))
                 }
             }
             // only ways and nodes are shown, see getStyledElements

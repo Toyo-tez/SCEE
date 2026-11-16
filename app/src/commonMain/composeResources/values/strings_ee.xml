@@ -921,6 +921,9 @@ Out of the box SCEE is configured to behave very similar to StreetComplete.</str
     <string name="traffic_sign_overlay_readonly_node_country">There is no traffic sign catalogue for the country of this point. Its traffic sign tags are only shown as they are.</string>
     <string name="traffic_sign_overlay_readonly_node_uncertain">It cannot be determined reliably in which country this point lies, for example because it is close to a border. Therefore, its traffic signs cannot be edited here.</string>
     <string name="traffic_sign_overlay_node_hint">Only traffic_sign of this point is changed. Its direction and all other tags stay as they are, and nothing is transferred to the road.</string>
+    <string name="traffic_sign_overlay_create_node_hint">A new point with only traffic_sign is created exactly at the position of the crosshair. No other tags are added and nothing is transferred to the road. Check first that this sign is not already mapped nearby.</string>
+    <string name="traffic_sign_overlay_create_node_country">There is no traffic sign catalogue for the country at the position of the crosshair. No traffic sign can be added here.</string>
+    <string name="traffic_sign_overlay_create_node_uncertain">It cannot be determined reliably in which country the position of the crosshair lies, for example because it is close to a border. Therefore, no traffic sign can be added here.</string>
     <string name="traffic_sign_overlay_node_confirm_replace">Replace traffic_sign=%1$s with traffic_sign=%2$s?</string>
     <string name="traffic_sign_overlay_signs_only">For this country, only the traffic signs are recorded. No other tags are derived from them.</string>
     <string name="traffic_sign_overlay_catalogue_missing">The traffic sign catalogue could not be loaded.</string>

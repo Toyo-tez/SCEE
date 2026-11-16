@@ -15,19 +15,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import de.westnordost.streetcomplete.data.osm.edits.create.CreateNodeAction
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapChangesBuilder
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.updateElementTagsActionOrNull
+import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.data.osm.mapdata.Node
 import de.westnordost.streetcomplete.data.overlays.Edit
 import de.westnordost.streetcomplete.data.overlays.OverlayAction
+import de.westnordost.streetcomplete.data.preferences.Preferences
 import de.westnordost.streetcomplete.data.traffic_signs.TrafficSignCatalogues
 import de.westnordost.streetcomplete.osm.traffic_sign.DirectionSelection
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignCatalogue
+import de.westnordost.streetcomplete.osm.traffic_sign.isUsableWith
 import de.westnordost.streetcomplete.osm.traffic_sign.parseTrafficSignNodeValue
 import de.westnordost.streetcomplete.osm.traffic_sign.trafficSignNodeChange
 import de.westnordost.streetcomplete.resources.*
 import de.westnordost.streetcomplete.ui.common.dialogs.AlertDialog
+import de.westnordost.streetcomplete.ui.common.last_picked.LastPickedChipsRow
 import de.westnordost.streetcomplete.ui.common.overlay.OverlayForm
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -107,5 +113,88 @@ private fun TrafficSignNodeOverlayFormContent(
                 TextButton(onClick = { confirmReplace = false; save() }) { Text(stringResource(Res.string.traffic_sign_confirm_yes)) }
             },
         )
+    }
+}
+
+/** The editor for a new node with traffic signs at [position] (the crosshair, like in the things
+ *  overlay) with the catalogue of [country]: the same picker as for existing nodes. On OK, a new node
+ *  with only traffic_sign=* is created, nothing else is derived or added. On cancel, nothing is
+ *  created. Only to be shown if [position] lies certainly in [country], see TrafficSignOverlay. */
+@Composable
+fun TrafficSignNewNodeOverlayForm(
+    on: (OverlayAction) -> Unit,
+    position: LatLon,
+    country: String,
+    catalogues: TrafficSignCatalogues = koinInject(),
+    preferences: Preferences = koinInject(),
+) {
+    when (val s = rememberTrafficSignCatalogueState(catalogues, country)) {
+        TrafficSignCatalogueState.Loading -> OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
+            Text(stringResource(Res.string.traffic_sign_overlay_loading))
+        }
+        TrafficSignCatalogueState.Failed -> OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
+            Text(stringResource(Res.string.traffic_sign_overlay_catalogue_missing))
+        }
+        is TrafficSignCatalogueState.Ready -> TrafficSignNewNodeOverlayFormContent(on, position, s.catalogue, preferences)
+    }
+}
+
+@Composable
+private fun TrafficSignNewNodeOverlayFormContent(
+    on: (OverlayAction) -> Unit,
+    position: LatLon,
+    catalogue: TrafficSignCatalogue,
+    preferences: Preferences,
+) {
+    // saved as text (the traffic_sign value), "" = nothing picked yet. Not reset when the map (and
+    // with it the crosshair, [position]) is moved within the same country
+    var encoded by rememberSaveable(catalogue.country) { mutableStateOf("") }
+    val selection = remember(encoded, catalogue) { DirectionSelection.decode(encoded, catalogue) }
+    // the same rules as for an existing node without any tags: only real signs, written as read
+    val change = remember(selection) { trafficSignNodeChange(emptyMap(), DirectionSelection.NotSurveyed, selection) }
+    // only signs of this country that are the same in both directions make sense for one node
+    val lastPicked = remember(catalogue) {
+        preferences.lastPickedTrafficSigns().filter {
+            it.isSameInBothDirections && it.isUsableWith(catalogue) &&
+                DirectionSelection.decode(it.forward, catalogue) is DirectionSelection.Signed
+        }
+    }
+
+    OverlayForm(
+        on = on,
+        isComplete = change != null,
+        hasChanges = change != null,
+        onClickOk = {
+            val c = change
+            if (c != null) {
+                preferences.rememberPickedTrafficSign(encoded)
+                on(Edit(CreateNodeAction(position, mapOf(c.key to c.value))))
+            }
+        },
+    ) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (lastPicked.isNotEmpty()) {
+                LastPickedChipsRow(items = lastPicked, onClick = { encoded = it.forward }) { CombinationChip(it, catalogue) }
+            }
+            SignsEditor(
+                catalogue = catalogue,
+                selection = selection,
+                hasExistingValue = false,
+                onChange = { encoded = if (it is DirectionSelection.Signed) it.encode() else "" },
+            )
+            Text(stringResource(Res.string.traffic_sign_overlay_create_node_hint), style = MaterialTheme.typography.caption)
+            change?.let {
+                Text("${it.key}=${it.value}", fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.body2)
+            }
+        }
+    }
+}
+
+/** Shown instead of the editor for a new node if the country at the crosshair has no catalogue or is
+ *  uncertain (e.g. near a border): nothing can be created. */
+@Composable
+fun TrafficSignNewNodeUnavailableForm(on: (OverlayAction) -> Unit, explanation: StringResource) {
+    OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
+        Text(stringResource(explanation))
     }
 }

@@ -139,6 +139,16 @@ internal fun readOnlyNodeExplanation(
     else -> Res.string.traffic_sign_overlay_readonly_node_uncertain
 }
 
+/** Why no new node with traffic signs can be created at a position in [country] */
+internal fun newNodeUnavailableExplanation(
+    country: TrafficSignWayCountry,
+    hasCatalogue: (String) -> Boolean,
+): StringResource = when {
+    country is TrafficSignWayCountry.Within && !hasCatalogue(country.country) -> Res.string.traffic_sign_overlay_create_node_country
+    country is TrafficSignWayCountry.Uncertain && country.country != null && !hasCatalogue(country.country) -> Res.string.traffic_sign_overlay_create_node_country
+    else -> Res.string.traffic_sign_overlay_create_node_uncertain
+}
+
 /** The tags of [keys] that have a value, in the order of [keys], with their values as they are */
 internal fun readOnlyTrafficSignTags(
     tags: Map<String, String>,
