@@ -12,10 +12,13 @@ on:
       - 'gradlew'
       - 'gradlew.bat'
 
+permissions:
+  contents: read
+
 jobs:
   validation:
     name: "Validation"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: gradle/wrapper-validation-action@v1
+      - uses: gradle/actions/wrapper-validation@v6.4.1
