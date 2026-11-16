@@ -1,5 +1,6 @@
 package de.westnordost.streetcomplete.osm.traffic_sign
 
+import de.westnordost.streetcomplete.data.traffic_signs.TrafficSignCatalogues
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -13,6 +14,14 @@ object TrafficSignTestData {
 
     val catalogueDE: TrafficSignCatalogue by lazy {
         TrafficSignCatalogue.parse(readText("$RESOURCES_DIR/files/traffic_signs/DE.json"))
+    }
+
+    /** All bundled catalogues, as the app reads them (index + catalogue per country) */
+    val bundledCatalogues: TrafficSignCatalogues by lazy {
+        TrafficSignCatalogues(
+            loadIndex = { readBytesOrNull("$RESOURCES_DIR/files/traffic_signs/${TrafficSignCatalogues.INDEX_FILE}")?.decodeToString() },
+            loadJson = { country -> readBytesOrNull("$RESOURCES_DIR/files/traffic_signs/$country.json")?.decodeToString() },
+        )
     }
 
     fun readText(path: String): String =

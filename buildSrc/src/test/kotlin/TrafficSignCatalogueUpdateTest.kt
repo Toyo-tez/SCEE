@@ -20,12 +20,18 @@ class TrafficSignCatalogueUpdateTest {
     private fun sign(
         id: String, kind: String = "traffic_sign", name: String = "Zeichen $id", signId: String = id,
         recommendations: String = "\"none\"", redirects: String = "[]", extra: String = "",
-    ) = """{"osmValuePart": "$id", "signId": "$signId", "name": "$name", "kind": "$kind", "catalogue": {"signCategory": "x"}, "tagRecommendationsByGeometry": $recommendations, "redirects": $redirects$extra}"""
+        licence: String? = "Public Domain",
+    ): String {
+        val image = if (licence == null) "\"missing\"" else """{"kind": "remote", "licence": "$licence"}"""
+        return """{"osmValuePart": "${esc(id)}", "signId": "${esc(signId)}", "name": "$name", "kind": "$kind", "catalogue": {"signCategory": "x"}, "tagRecommendationsByGeometry": $recommendations, "redirects": $redirects, "image": $image$extra}"""
+    }
 
-    private fun catalogue(version: String, vararg signs: String) =
-        """{"country": "DE", "version": "$version", "signs": [${signs.joinToString(",")}], "relations": []}"""
+    private fun esc(s: String) = s.replace("\"", "\\\"")
 
-    private fun imageName(id: String) = "DE_" + id.replace("[", "__").replace("]", "__").replace(Regex("[^a-zA-Z0-9_]"), "_")
+    private fun catalogue(version: String, vararg signs: String, country: String = "DE") =
+        """{"country": "$country", "version": "$version", "signs": [${signs.joinToString(",")}], "relations": []}"""
+
+    private fun imageName(id: String, country: String = "DE") = "${country}_" + id.replace("[", "__").replace("]", "__").replace(Regex("[^a-zA-Z0-9_]"), "_")
 
     private fun tarGz(files: Map<String, ByteArray>): ByteArray {
         val tar = ByteArrayOutputStream()
@@ -44,11 +50,18 @@ class TrafficSignCatalogueUpdateTest {
         return ByteArrayOutputStream().also { o -> GZIPOutputStream(o).use { it.write(tar.toByteArray()) } }.toByteArray()
     }
 
-    private class Package(val version: String, val json: String, val svgIds: List<String>, extra: Map<String, ByteArray> = emptyMap()) {
+    /** a package with the catalogue [json] of DE and the [others] (country -> catalogue json and ids of the svgs) */
+    private class Package(
+        val version: String, val json: String, val svgIds: List<String>,
+        extra: Map<String, ByteArray> = emptyMap(),
+        others: Map<String, Pair<String, List<String>>> = emptyMap(),
+    ) {
         val files: Map<String, ByteArray> = buildMap {
             put("package/package.json", """{"version": "$version"}""".encodeToByteArray())
-            put("package/dist/data/DE.json", json.encodeToByteArray())
-            for (id in svgIds) put("package/dist/data-svgs/DE/svgs/${"DE_" + id.replace("[", "__").replace("]", "__").replace(Regex("[^a-zA-Z0-9_]"), "_")}.svg", "<svg id=\"$id\"/>".encodeToByteArray())
+            for ((country, content) in mapOf("DE" to (json to svgIds)) + others) {
+                put("package/dist/data/$country.json", content.first.encodeToByteArray())
+                for (id in content.second) put("package/dist/data-svgs/$country/svgs/${"${country}_" + id.replace("[", "__").replace("]", "__").replace(Regex("[^a-zA-Z0-9_]"), "_")}.svg", "<svg id=\"$id\"/>".encodeToByteArray())
+            }
             putAll(extra)
         }
     }
@@ -92,7 +105,7 @@ class TrafficSignCatalogueUpdateTest {
     }
 
     private fun config(env: Env, version: String, sha256: String?, apply: Boolean = true, acceptReview: Boolean = false, ruleSigns: Set<String> = setOf("250", "1020-30")) =
-        TrafficSignUpdateConfig(version, sha256, "DE", env.target, env.backup, env.reports, env.history, ruleSigns, apply, acceptReview)
+        TrafficSignUpdateConfig(version, sha256, env.target, env.backup, env.reports, env.history, mapOf("DE" to ruleSigns), apply, acceptReview)
 
     private fun snapshot(dir: File): Map<String, String> =
         dir.walkTopDown().filter { it.isFile }.associate { it.relativeTo(dir).path.replace('\\', '/') to sha256(it.readBytes()) }
@@ -135,7 +148,7 @@ class TrafficSignCatalogueUpdateTest {
         assertTrue(diff.removed.isEmpty())
         assertTrue(diff.reviewReasons.isEmpty(), diff.reviewReasons.toString())
         val report = result.reportFile.readText()
-        assertTrue("0.1.0 -> 0.2.0" in report && "274-40" in report && "274-30: name" in report)
+        assertTrue("0.1.0 -> 0.2.0" in report && "274-40" in report && "274-30: name" in report, report)
         assertTrue(File(env.history, "0.1.0-to-0.2.0.md").isFile)
         // the previous files are kept as backup
         assertTrue(File(env.backup, "DE.json").readText().contains("\"0.1.0\""))
@@ -254,11 +267,11 @@ class TrafficSignCatalogueUpdateTest {
     }
 
     @Test fun `broken or incomplete catalogues are not applied`() {
-        broken("unknown kind", catalogue("0.2.0", sign("250"), sign("1020-30", kind = "something_new")), listOf("250", "1020-30"), "unknown kind something_new")
-        broken("missing field", catalogue("0.2.0", """{"osmValuePart": "250", "signId": "250", "kind": "traffic_sign"}"""), listOf("250"), "name is missing")
-        broken("duplicate id", catalogue("0.2.0", sign("250"), sign("250")), listOf("250"), "duplicate osmValuePart")
-        broken("missing svg", catalogue("0.2.0", sign("250"), sign("274-30")), listOf("250"), "no SVG")
-        broken("image name collision", catalogue("0.2.0", sign("274-30"), sign("274_30")), listOf("274-30", "274_30"), "image name")
+        // a rule sign that can not be imported anymore: the rules would refer to nothing
+        broken("unknown kind of a rule sign", catalogue("0.2.0", sign("250"), sign("1020-30", kind = "something_new")), listOf("250", "1020-30"), "signs of the curated rules are not imported: 1020-30")
+        broken("missing field of a rule sign", catalogue("0.2.0", """{"osmValuePart": "250", "signId": "250", "kind": "traffic_sign"}""", sign("1020-30", kind = "exception_modifier")), listOf("250", "1020-30"), "signs of the curated rules are not imported: 250")
+        broken("missing svg of a rule sign", catalogue("0.2.0", sign("250"), sign("1020-30", kind = "exception_modifier")), listOf("250"), "signs of the curated rules are not imported: 1020-30")
+        broken("image name collision", catalogue("0.2.0", sign("250"), sign("1020-30", kind = "exception_modifier"), sign("274-30"), sign("274_30")), listOf("250", "1020-30", "274-30", "274_30"), "manual review")
         broken("redirect to nothing", catalogue("0.2.0", sign("250", redirects = """[{"from": "x", "to": "999"}]""")), listOf("250"), "not in the catalogue")
         broken("not json", "not json", listOf("250"), "not a JSON object")
         broken("wrong version", catalogue("0.9.9", sign("250")), listOf("250"), "version")
@@ -269,21 +282,32 @@ class TrafficSignCatalogueUpdateTest {
         val env = Env(tmp())
         install(env, v1)
         val before = snapshot(env.target)
-        val files = pkg2(sign("250")).files - "package/dist/data/DE.json"
+        val files = pkg2(sign("250")).files - "package/dist/data/DE.json" + ("package/dist/data/FR.json" to catalogue("0.2.0", sign("B1"), country = "FR").encodeToByteArray())
         val registry = Registry(mapOf("0.2.0" to tarGz(files)))
         assertUnchanged(env, before) { run(env, registry, "0.2.0", sha256(registry.tarballByVersion.getValue("0.2.0"))) }
     }
 
-    @Test fun `an svg that cannot be converted is not applied`() {
+    @Test fun `an existing sign whose svg cannot be converted anymore is not dropped silently`() {
         val env = Env(tmp())
         install(env, v1)
         val before = snapshot(env.target)
-        val registry = Registry(mapOf("0.2.0" to tarGz(pkg2(sign("250"), sign("274-30")).files)))
+        val registry = Registry(mapOf("0.2.0" to tarGz(pkg2(sign("250"), sign("1020-30", kind = "exception_modifier"), sign("274-30")).files)))
         val sha = sha256(registry.tarballByVersion.getValue("0.2.0"))
+        val failing = { name: String, svg: ByteArray -> if (name.endsWith("274_30")) null to "ERROR @ line 1: unsupported element" else convert(name, svg) }
         val e = assertUnchanged(env, before) {
-            updateTrafficSignCatalogue(config(env, "0.2.0", sha), registry::fetch, { name, svg -> if (name.endsWith("274_30")) null to "unsupported element" else convert(name, svg) }, log = {})
+            updateTrafficSignCatalogue(config(env, "0.2.0", sha), registry::fetch, failing, log = {})
         }
-        assertTrue("unsupported element" in e.message!!)
+        assertTrue("not imported anymore" in e.message!! && "274-30" in e.message!!, e.message)
+    }
+
+    @Test fun `conversion warnings do not exclude a sign, errors do`() {
+        val env = Env(tmp())
+        val registry = Registry(mapOf("0.1.0" to tarGz(v1.files)))
+        val sha = sha256(registry.tarballByVersion.getValue("0.1.0"))
+        val warning = { name: String, svg: ByteArray -> convert(name, svg).first to "In $name.svg:\nWARNING @ line 1: <title> is ignored\n" }
+        val result = updateTrafficSignCatalogue(config(env, "0.1.0", sha), registry::fetch, warning, log = {})
+        assertEquals(listOf("250", "1020-30", "274-30"), result.plan.country("DE")!!.imported)
+        assertEquals(3, result.plan.country("DE")!!.warnings.size)
     }
 
     @Test fun `a failing write is rolled back`() {
@@ -293,7 +317,7 @@ class TrafficSignCatalogueUpdateTest {
         val registry = Registry(mapOf("0.2.0" to tarGz(pkg2(sign("250"), sign("274-40")).files)))
         val sha = sha256(registry.tarballByVersion.getValue("0.2.0"))
         val config = config(env, "0.2.0", sha)
-        val plan = planCatalogueUpdate(config, "0.2.0", sha, readTarGz(registry.tarballByVersion.getValue("0.2.0")), readCatalogueFiles(env.target, "DE"), ::convert)
+        val plan = planCatalogueUpdate(config, "0.2.0", sha, readTarGz(registry.tarballByVersion.getValue("0.2.0")), readCatalogueFiles(env.target), ::convert)
         assertTrue(plan.problems.isEmpty(), plan.problems.toString())
         var writes = 0
         val e = assertFailsWith<TrafficSignUpdateException> {
@@ -367,19 +391,180 @@ class TrafficSignCatalogueUpdateTest {
         val registry = Registry(mapOf("0.1.0" to tarGz(v1.files)))
         val result = run(env, registry, "0.1.0", sha256(registry.tarballByVersion.getValue("0.1.0")))
         assertTrue(result.applied)
-        assertNotNull(readCatalogueFiles(env.target, "DE")["DE.json"])
+        assertNotNull(readCatalogueFiles(env.target)["DE.json"])
         assertEquals(3, result.plan.diff.added.size)
     }
 
-    @Test fun `removed images are removed from the target`() {
+    @Test fun `an existing sign whose svg is missing now is not dropped silently`() {
         val env = Env(tmp())
         install(env, v1)
         val v2 = pkg2(sign("250"), sign("1020-30", kind = "exception_modifier"), sign("274-30"))
         // one image less in the package
         val files = v2.files.filterKeys { !it.endsWith("${imageName("274-30")}.svg") }
         val registry = Registry(mapOf("0.2.0" to tarGz(files)))
-        val e = assertFailsWith<TrafficSignUpdateException> { run(env, registry, "0.2.0", sha256(registry.tarballByVersion.getValue("0.2.0"))) }
-        assertTrue("no SVG" in e.message!!)
+        val sha = sha256(registry.tarballByVersion.getValue("0.2.0"))
+        val e = assertFailsWith<TrafficSignUpdateException> { run(env, registry, "0.2.0", sha) }
+        assertTrue("not imported anymore" in e.message!!, e.message)
         assertTrue(File(env.target, "DE/${imageName("274-30")}.xml").isFile)
+        // accepted: the image is removed, the sign is listed as excluded in the index
+        assertTrue(run(env, registry, "0.2.0", sha, acceptReview = true).applied)
+        assertFalse(File(env.target, "DE/${imageName("274-30")}.xml").exists())
+        assertTrue("\"274-30\"" in File(env.target, TRAFFIC_SIGNS_INDEX).readText())
+        // and the next update knows that it was not imported: no review again
+        val again = run(env, registry, "0.2.0", sha, apply = false)
+        assertTrue(again.plan.reviewReasons.isEmpty(), again.plan.reviewReasons.toString())
+    }
+
+    /* ------------------------------------------ all countries ------------------------------------------ */
+
+    private val fr = catalogue("0.1.0",
+        sign("B9b", name = "B9b"),
+        // no image in the package
+        sign("A1b", name = "A1b", licence = null),
+        // svg exists, but can not be converted
+        sign("B1", name = "B1"),
+        // ids that can not be written into a traffic_sign value without ambiguity
+        sign("A4+M9z"), sign("B-9,T-22"), sign("C1;C2"), sign("none"), sign("FR:C3"), sign("("), sign(" C4"),
+        // ids that can
+        sign("B14[50]", signId = "B14"), sign("J1 bis"), sign("Rb-76/76A"),
+        country = "FR",
+    )
+    private val frSvgs = listOf("B9b", "B1", "A4+M9z", "B-9,T-22", "C1;C2", "none", "FR:C3", "(", " C4", "B14[50]", "J1 bis", "Rb-76/76A")
+    private val at = catalogue("0.1.0", sign("52a"), sign("52b"), country = "AT")
+
+    private fun multiCountry(version: String = "0.1.0", others: Map<String, Pair<String, List<String>>>) =
+        Package(version, catalogue(version, sign("250"), sign("1020-30", kind = "exception_modifier"), sign("274-30")), listOf("250", "1020-30", "274-30"), others = others)
+
+    private val convertFailingB1 = { name: String, svg: ByteArray ->
+        if (name == "FR_B1") ByteArray(0) to "ERROR @ line 1: <text> is not supported" else convert(name, svg)
+    }
+
+    private fun runAll(env: Env, pkg: Package, apply: Boolean = true, acceptReview: Boolean = false): TrafficSignUpdateResult {
+        val registry = Registry(mapOf(pkg.version to tarGz(pkg.files)))
+        val sha = sha256(registry.tarballByVersion.getValue(pkg.version))
+        return updateTrafficSignCatalogue(config(env, pkg.version, sha, apply, acceptReview), registry::fetch, convertFailingB1, log = {})
+    }
+
+    @Test fun `all countries of the package are found and imported`() {
+        val env = Env(tmp())
+        val pkg = multiCountry(others = mapOf("FR" to (fr to frSvgs), "AT" to (at to listOf("52a", "52b"))))
+        val result = runAll(env, pkg)
+        assertTrue(result.applied)
+        assertEquals(listOf("AT", "DE", "FR"), result.plan.countries.map { it.country })
+        assertEquals(listOf("AT", "DE", "FR"), detectCountries(pkg.files))
+        for (c in listOf("AT", "DE", "FR")) assertTrue(File(env.target, "$c.json").isFile, c)
+        assertTrue(File(env.target, "AT/AT_52a.xml").isFile)
+        val index = File(env.target, TRAFFIC_SIGNS_INDEX).readText()
+        for (c in listOf("AT", "DE", "FR")) assertTrue("\"country\": \"$c\"" in index, index)
+    }
+
+    @Test fun `a country that is new in the package is imported without any change of the configuration`() {
+        val env = Env(tmp())
+        runAll(env, multiCountry(others = mapOf("FR" to (fr to frSvgs))))
+        assertFalse(File(env.target, "AT.json").exists())
+        val v2 = multiCountry(version = "0.2.0", others = mapOf(
+            "FR" to (fr.replace("0.1.0", "0.2.0") to frSvgs),
+            "AT" to (at.replace("0.1.0", "0.2.0") to listOf("52a", "52b")),
+        ))
+        val result = runAll(env, v2)
+        assertTrue(result.applied)
+        assertTrue(File(env.target, "AT.json").isFile)
+        assertEquals(listOf("52a", "52b"), result.plan.country("AT")!!.imported)
+        // a new country needs no review
+        assertTrue(result.plan.reviewReasons.isEmpty(), result.plan.reviewReasons.toString())
+    }
+
+    @Test fun `signs without image, with a defective image or an unsupported id are skipped, the rest is imported`() {
+        val env = Env(tmp())
+        val result = runAll(env, multiCountry(others = mapOf("FR" to (fr to frSvgs))))
+        val frImport = result.plan.country("FR")!!
+        assertEquals(listOf("B9b", "B14[50]", "J1 bis", "Rb-76/76A"), frImport.imported)
+        val reasons = frImport.excluded.associate { it.osmValuePart to it.reason }
+        assertEquals(ExclusionReason.NO_IMAGE, reasons["A1b"])
+        assertEquals(ExclusionReason.DEFECTIVE_IMAGE, reasons["B1"])
+        for (id in listOf("A4+M9z", "B-9,T-22", "C1;C2", "none", "FR:C3", "(", " C4")) {
+            assertEquals(ExclusionReason.UNSUPPORTED_ID, reasons[id], id)
+        }
+        assertEquals(13, frImport.catalogueSigns)
+        assertEquals(8, frImport.skippedCount)
+        assertEquals(1, frImport.errorCount)
+        // only the images of imported signs are written
+        assertTrue(File(env.target, "FR/FR_B9b.xml").isFile)
+        assertFalse(File(env.target, "FR/FR_B1.xml").exists())
+        assertFalse(File(env.target, "FR/FR_A4_M9z.xml").exists())
+        // the catalogue itself is copied unchanged, the index lists what is left out and why
+        assertEquals(fr, File(env.target, "FR.json").readText())
+        val index = File(env.target, TRAFFIC_SIGNS_INDEX).readText()
+        assertTrue("\"osmValuePart\": \"B1\"" in index && "\"reason\": \"defective_image\"" in index, index)
+        assertTrue("\"importedSigns\": 4" in index && "\"skippedSigns\": 8" in index && "\"erroneousSigns\": 1" in index, index)
+        // and the report counts them per country
+        val report = result.reportFile.readText()
+        assertTrue("| FR | 13 | 4 | 8 | 1 | imported |" in report, report)
+        assertTrue("| DE | 3 | 3 | 0 | 0 | imported |" in report, report)
+    }
+
+    @Test fun `a new country that can not be read at all is reported and left out, the others are imported`() {
+        val env = Env(tmp())
+        val result = runAll(env, multiCountry(others = mapOf("FR" to ("not json" to emptyList()), "AT" to (at to listOf("52a")))))
+        assertTrue(result.applied)
+        assertFalse(result.plan.country("FR")!!.isImported)
+        assertFalse(File(env.target, "FR.json").exists())
+        assertTrue(File(env.target, "AT.json").isFile)
+        assertEquals(listOf("52a"), result.plan.country("AT")!!.imported)
+        assertTrue("NOT imported" in result.reportFile.readText())
+    }
+
+    @Test fun `an existing country that can not be read anymore stops the update`() {
+        val env = Env(tmp())
+        runAll(env, multiCountry(others = mapOf("FR" to (fr to frSvgs))))
+        val before = snapshot(env.target)
+        val e = assertUnchanged(env, before) { runAll(env, multiCountry(version = "0.2.0", others = mapOf("FR" to ("not json" to emptyList())))) }
+        assertTrue("FR: not a JSON object" in e.message!!, e.message)
+    }
+
+    @Test fun `an existing country that is not in the package anymore needs a review`() {
+        val env = Env(tmp())
+        runAll(env, multiCountry(others = mapOf("FR" to (fr to frSvgs))))
+        val before = snapshot(env.target)
+        val e = assertUnchanged(env, before) { runAll(env, multiCountry(version = "0.2.0", others = emptyMap())) }
+        assertTrue("FR: the catalogue is not in the package anymore" in e.message!!, e.message)
+        assertTrue(runAll(env, multiCountry(version = "0.2.0", others = emptyMap()), acceptReview = true).applied)
+        assertFalse(File(env.target, "FR.json").exists())
+        assertFalse(File(env.target, "FR").exists())
+    }
+
+    @Test fun `the import is deterministic and can be repeated`() {
+        val pkg = multiCountry(others = mapOf("FR" to (fr to frSvgs), "AT" to (at to listOf("52a", "52b"))))
+        val env1 = Env(tmp())
+        val env2 = Env(tmp())
+        runAll(env1, pkg)
+        // the same package with the files in a different order in the archive
+        val shuffled = pkg.files.entries.reversed().associate { it.toPair() }
+        val registry = Registry(mapOf(pkg.version to tarGz(shuffled)))
+        updateTrafficSignCatalogue(config(env2, pkg.version, sha256(registry.tarballByVersion.getValue(pkg.version))), registry::fetch, convertFailingB1, log = {})
+        // (VERSION has the hash of the tarball, which differs)
+        assertEquals(snapshot(env1.target) - "VERSION", snapshot(env2.target) - "VERSION")
+        fun versionWithoutHash(env: Env) = File(env.target, "VERSION").readLines().filter { !it.startsWith("sha256") }
+        assertEquals(versionWithoutHash(env1), versionWithoutHash(env2))
+        // again: nothing to do, nothing is touched
+        val before = snapshot(env1.target)
+        val again = runAll(env1, pkg)
+        assertFalse(again.applied)
+        assertTrue(again.plan.identical)
+        assertEquals(before, snapshot(env1.target))
+    }
+
+    @Test fun `ids are checked like the parser of the app reads them`() {
+        for (ok in listOf("237", "274[30]", "1042-32[PH off;Mo-Sa 8:30-11:30,16:00-18:00]", "\"Kfz-Verkehr frei\"", "Kein Winterdienst", "J1 bis", "Rb-76/76A", "274.1-20", "B14[50]", "A16[10%]")) {
+            assertEquals(null, osmValuePartProblem(ok), ok)
+        }
+        for (bad in listOf("", " 1", "1 ", "B1+M1", "C5 + C7", "B-9,T-22", "C1;C2", "DE:250", "none", "No", "city_limit", "(", "274[30", "274[30]x", "274[]", "\"a\"b\"", "\"\"", "a=b")) {
+            assertNotNull(osmValuePartProblem(bad), bad)
+        }
+    }
+
+    @Test fun `the rule signs are read per country`() {
+        assertEquals(mapOf("DE" to setOf("237", "1020-30"), "FR" to setOf("B9b")), parseRuleSigns(listOf("# comment", "DE:237", "DE:1020-30 # x", "", "FR:B9b")))
+        assertFailsWith<IllegalArgumentException> { parseRuleSigns(listOf("237")) }
     }
 }

@@ -1,0 +1,53 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="15049dp"
+    android:height="15046dp"
+    android:viewportWidth="15049"
+    android:viewportHeight="15046">
+  <group>
+    <clip-path
+        android:pathData="M-2629,-5744h21000v29700h-21000z"/>
+    <path
+        android:pathData="M1,-0l0,15045l15047,0L15048,-0z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28"
+        android:fillColor="#fefefe"
+        android:fillType="evenOdd"/>
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M527,539v13980h13985L14512,539Z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="M527,539v13980h13985L14512,539Z"
+        android:strokeLineJoin="miter"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:strokeColor="#1b1918"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="M1525,1537v11985h11990L13515,1537Z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillColor="#fefefe"
+        android:fillType="evenOdd"/>
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="m12102,4660 l-1065,885h-1950L9087,4064h-748v-921h1345v-469L6432,2674v469h1340v921h-726v1481L5782,5545c-698,0 -1200,308 -1209,1011 -9,704 -17,1860 0,1860h1209c13,-329 0,-672 0,-1001 0,-283 97,-444 337,-444h4918l1065,850z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillType="evenOdd"/>
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="m3564,7964 l511,3811h2233l536,-3811h647l-623,4424L3530,12388l-592,-4424z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillType="evenOdd"/>
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M5193,10610c-414,0 -750,-336 -750,-750 0,-412 583,-742 728,-1081 187,331 771,669 771,1081 0,414 -337,750 -749,750"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillType="evenOdd"/>
+  </group>
+</vector>

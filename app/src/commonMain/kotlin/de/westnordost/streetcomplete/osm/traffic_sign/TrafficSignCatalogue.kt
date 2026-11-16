@@ -34,6 +34,16 @@ class TrafficSignCatalogue(
     private val dashValueSignIds: Set<String> =
         signs.filter { it.redirectDashValues }.mapTo(HashSet()) { it.signId }
 
+    /** The signs that can be offered for selection, in catalogue order: the ones whose value is read
+     *  back as exactly that sign, see [isSelectable] */
+    val selectableSigns: List<TrafficSign> by lazy { signs.filter { isSelectable(it) } }
+
+    /** Whether the catalogue says which additional signs fit to which main signs. Only then can
+     *  additional signs be combined with main signs in the editor: without it, nothing tells whether a
+     *  combination is valid. */
+    val hasModifierCompatibility: Boolean =
+        signs.any { it.isModifier } && signs.any { it.canReceiveModifiers != null || it.incompatibleModifiers.isNotEmpty() }
+
     /** the sign with exactly the given osm value part, e.g. "274-30", without resolving redirects */
     fun getByOsmValuePart(osmValuePart: String): TrafficSign? = byOsmValuePart[osmValuePart]
 
@@ -54,6 +64,12 @@ class TrafficSignCatalogue(
     }
 
     private fun resolveWithoutRedirect(osmValuePart: String): ResolvedTrafficSign? {
+        // a sign whose id ends with a fixed value in brackets, e.g. "52.10a[30]" in Austria (speed
+        // limit 30): the brackets are part of its id, there is no variable value to read
+        val exact = byOsmValuePart[osmValuePart]
+        if (exact != null && !exact.hasVariableValue && osmValuePart.endsWith(']')) {
+            return ResolvedTrafficSign(exact, exact.osmValuePart, null)
+        }
         val (signId, value) = splitSignIdAndValue(osmValuePart)
         val sign = byOsmValuePart[osmValuePart]?.takeIf { value == null || it.signValueMatches(value) }
             ?: getBySignIdAndValue(signId, value)
@@ -326,7 +342,10 @@ private fun SignJson.toTrafficSign() = TrafficSign(
         else -> throw IllegalArgumentException("Unknown kind \"$kind\" of sign $osmValuePart")
     },
     category = catalogue.signCategory,
-    defaultValue = signValue?.contentOrNull,
+    // some catalogues (e.g. AU) give the value of a sign with variable value only in its id, e.g.
+    // "R4-1[10]", not as signValue. (In DE, signValue is always the value in the id.)
+    defaultValue = signValue?.contentOrNull
+        ?: if (valuePrompt != null) splitSignIdAndValue(osmValuePart).second else null,
     valuePrompt = valuePrompt?.let { TrafficSignValuePrompt(it.prompt, it.format, it.defaultValue) },
     redirects = redirects.map { TrafficSignRedirect(it.from, it.to) },
     redirectDashValues = redirectDashValues,
