@@ -46,6 +46,7 @@ class WaterwayCrossingQuestControllerTest : StreetCompleteDatabaseTestCase() {
         override fun getIds(position: LatLon) = emptyList<String>()
         override fun isInAny(position: LatLon, countries: Countries) = true
         override fun intersects(bbox: BoundingBox, countries: Countries) = true
+        override fun getContainingIds(bbox: BoundingBox) = emptySet<String>()
     }
     private val notes = mock<NotesWithEditsSource> {
         every { getAllPositions(any()) } returns emptyList()

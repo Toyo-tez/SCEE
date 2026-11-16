@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.StringMapChangesBuilder
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.UpdateElementTagsAction
 import de.westnordost.streetcomplete.data.osm.edits.update_tags.updateElementTagsActionOrNull
@@ -29,23 +28,19 @@ import de.westnordost.streetcomplete.ui.common.overlay.OverlayForm
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
-private const val COUNTRY = "DE"
+/** The only country for which the traffic sign editor (catalogue and rules to derive tags) exists */
+internal const val TRAFFIC_SIGN_EDITOR_COUNTRY = "DE"
 
+/** The traffic sign editor. Only to be shown for ways that lie completely in
+ *  [TRAFFIC_SIGN_EDITOR_COUNTRY], see TrafficSignOverlay */
 @Composable
 fun TrafficSignOverlayForm(
     on: (OverlayAction) -> Unit,
     way: Way,
     geometry: ElementGeometry,
-    countryInfo: CountryInfo,
     catalogues: TrafficSignCatalogues = koinInject(),
 ) {
-    if (countryInfo.countryCode != COUNTRY) {
-        OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
-            Text(stringResource(Res.string.traffic_sign_overlay_germany_only))
-        }
-        return
-    }
-    when (val s = rememberTrafficSignCatalogueState(catalogues, COUNTRY)) {
+    when (val s = rememberTrafficSignCatalogueState(catalogues, TRAFFIC_SIGN_EDITOR_COUNTRY)) {
         TrafficSignCatalogueState.Loading -> OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
             Text(stringResource(Res.string.traffic_sign_overlay_loading))
         }

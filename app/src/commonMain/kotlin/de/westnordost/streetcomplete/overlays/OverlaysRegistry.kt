@@ -3,6 +3,7 @@ package de.westnordost.streetcomplete.overlays
 import de.westnordost.streetcomplete.ApplicationConstants.EE_QUEST_OFFSET
 import de.westnordost.osmfeatures.Feature
 import de.westnordost.streetcomplete.data.meta.CountryInfo
+import de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox
 import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
 import de.westnordost.streetcomplete.data.overlays.OverlayRegistry
@@ -29,6 +30,9 @@ fun overlaysRegistry(
     getCountryCodeByLocation: (LatLon) -> String?,
     getFeature: (Element) -> Feature?,
     prefs: Preferences,
+    /** ids of the countries (and subdivisions) that are guaranteed to contain the whole bounding box.
+     *  Without it, no way can be shown to lie completely in one country (see TrafficSignOverlay) */
+    getContainingCountryCodes: (BoundingBox) -> Set<String> = { emptySet() },
 ) = OverlayRegistry(listOf(
 
     /* Each overlay is assigned an ordinal. This is used for serialization and is thus never
@@ -48,5 +52,5 @@ fun overlaysRegistry(
     9 to MtbScaleOverlay(),
     (EE_QUEST_OFFSET + 1) to RestrictionOverlay(),
     (EE_QUEST_OFFSET + 0) to CustomOverlay(prefs),
-    (EE_QUEST_OFFSET + 2) to TrafficSignOverlay(getCountryCodeByLocation),
+    (EE_QUEST_OFFSET + 2) to TrafficSignOverlay(getCountryCodeByLocation, getContainingCountryCodes),
 ))

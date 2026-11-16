@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import de.westnordost.streetcomplete.data.elementfilter.toElementFilterExpression
 import de.westnordost.streetcomplete.data.meta.CountryInfo
 import de.westnordost.streetcomplete.data.osm.geometry.ElementGeometry
+import de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox
 import de.westnordost.streetcomplete.data.osm.mapdata.Element
 import de.westnordost.streetcomplete.data.osm.mapdata.ElementType
 import de.westnordost.streetcomplete.data.osm.mapdata.LatLon
@@ -12,11 +13,13 @@ import de.westnordost.streetcomplete.data.osm.osmquests.OsmElementQuestType
 import de.westnordost.streetcomplete.data.osm.osmquests.QuestAction
 import de.westnordost.streetcomplete.osm.Tags
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignAccess
+import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWayCountry
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWaySigns
 import de.westnordost.streetcomplete.osm.traffic_sign.applyConfirmed
 import de.westnordost.streetcomplete.osm.traffic_sign.deriveWayTags
 import de.westnordost.streetcomplete.osm.traffic_sign.isWayInGermany
 import de.westnordost.streetcomplete.osm.traffic_sign.needsTrafficSignSurvey
+import de.westnordost.streetcomplete.osm.traffic_sign.trafficSignWayCountry
 import de.westnordost.streetcomplete.quests.FullElementSelectionDialog
 import de.westnordost.streetcomplete.quests.getPrefixedFullElementSelectionPref
 import de.westnordost.streetcomplete.resources.*
@@ -38,13 +41,20 @@ data class TrafficSignAnswer(
  *  1. the element filter ([DEFAULT_ELEMENT_FILTER], configurable in the quest settings)
  *  2. at least one direction is not surveyed or only has traffic_sign=yes
  *     (see [needsTrafficSignSurvey]). traffic_sign=none is a valid answer.
- *  3. the way is completely in Germany (only after 1. and 2., needs the country boundaries)
+ *  3. the way is completely in Germany (only after 1. and 2., needs the country boundaries): both
+ *     center, first and last point ([isWayInGermany], cheap) and the whole geometry
+ *     ([trafficSignWayCountry], also every vertex and the segments between them). So it is never
+ *     asked about more ways than with the former check alone, and not about ways that leave Germany
+ *     between their ends.
  *
  *  The answer is written to the way only, via the traffic sign tagging engine, which keeps
  *  everything that is not answered. A direction that is not answered stays as it is. */
 class AddTrafficSignType(
     /** returns the ISO 3166-1 (or subdivision) code of the country at the given position */
     private val getCountryCode: (LatLon) -> String?,
+    /** returns the ISO 3166-1 (or subdivision) codes of the regions that are guaranteed to contain
+     *  the whole given bounding box. Without it, the points of each way are looked up */
+    private val getContainingCountryCodes: (BoundingBox) -> Set<String> = { emptySet() },
 ) : OsmElementQuestType<TrafficSignAnswer> {
 
     private val filter by lazy {
@@ -83,9 +93,11 @@ class AddTrafficSignType(
         needsTrafficSignSurvey(element.tags)
 
     override fun getApplicableElements(mapData: MapDataWithGeometry): Iterable<Element> =
-        mapData.ways.filter {
-            matchesTags(it) && isWayInGermany(mapData.getWayGeometry(it.id), getCountryCode)
-        }
+        mapData.ways.filter { matchesTags(it) && isCompletelyInGermany(mapData.getWayGeometry(it.id)) }
+
+    private fun isCompletelyInGermany(geometry: ElementGeometry?): Boolean =
+        isWayInGermany(geometry, getCountryCode) &&
+        trafficSignWayCountry(geometry, getCountryCode, getContainingCountryCodes) == TrafficSignWayCountry.Within("DE")
 
     /** false if the tags do not qualify (the common case, e.g. after the quest was answered). For
      *  the remaining candidates, null: the complete check including the position of the whole way

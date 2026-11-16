@@ -442,7 +442,8 @@ val commonModule = module {
             { countryBoundariesLazy.value.getIds(it).firstOrNull() },
             { featureDictionaryLazy.value.getFeature(it) },
             get(),
-            get()
+            get(),
+            { countryBoundariesLazy.value.getContainingIds(it) },
         )
     }
 
@@ -526,7 +527,11 @@ val commonModule = module {
             { element ->
                 get<Lazy<FeatureDictionary>>(named("FeatureDictionaryLazy")).value.getFeature(element)
             },
-            get()
+            get(),
+            { bbox ->
+                val countryBoundaries = get<Lazy<CountryBoundaries>>(named("CountryBoundariesLazy")).value
+                countryBoundaries.getContainingIds(bbox)
+            },
         )
     }
 

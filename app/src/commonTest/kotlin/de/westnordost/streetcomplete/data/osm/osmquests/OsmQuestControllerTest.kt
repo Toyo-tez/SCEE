@@ -95,6 +95,8 @@ class OsmQuestControllerTest {
 
             override fun intersects(bbox: BoundingBox, countries: Countries): Boolean =
                 countries !is NoCountriesExcept
+
+            override fun getContainingIds(bbox: BoundingBox): Set<String> = emptySet()
         }
 
         expertMode = false
