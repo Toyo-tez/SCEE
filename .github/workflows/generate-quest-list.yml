@@ -3,6 +3,9 @@ name: Generate quest list
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   generate-quest-list:
     name: Generate quest list
