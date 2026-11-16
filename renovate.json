@@ -23,7 +23,7 @@
       "description": "Keep Nucleus development builds under manual control",
       "matchPackageNames": ["/^dev\\.nucleusframework/"],
       "enabled": false
-    }
+    },
     {
   "description": "False positive: ABI list in androidApp ndk.abiFilters",
   "matchManagers": ["gradle"],
