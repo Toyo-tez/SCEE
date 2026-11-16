@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "baseBranchPatterns": ["SCEE-mc"],
+  "ignoreDeps": [
+    "org.maplibre.compose:maplibre-compose-runtime-metal-macos-x64",
+    "armeabi-v7a:arm64-v8a"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": ["* 3-6 * * 1"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "automerge": false,
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group Kotlin ecosystem updates",
+      "matchPackageNames": ["/^org\\.jetbrains\\.kotlin(\\.|:)/"],
+      "groupName": "Kotlin ecosystem"
+    },
+    {
+      "description": "Keep Nucleus development builds under manual control",
+      "matchPackageNames": ["/^dev\\.nucleusframework/"],
+      "enabled": false
+    },
+    {
+  "description": "False positive: ABI list in androidApp ndk.abiFilters",
+  "matchManagers": ["gradle"],
+  "matchPackageNames": ["armeabi-v7a:arm64-v8a"],
+  "enabled": false
+   }
+  ]
+}
