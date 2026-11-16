@@ -1,6 +1,8 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import dev.mokkery.MockMode
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 import java.io.FileWriter
@@ -574,6 +576,18 @@ compose.resources {
     )
 }
 tasks.withType<Test>().configureEach {
+    if (providers.environmentVariable("CI").isPresent) {
+        testLogging {
+            events(
+                TestLogEvent.STARTED,
+                TestLogEvent.FAILED,
+                TestLogEvent.SKIPPED,
+            )
+            exceptionFormat = TestExceptionFormat.FULL
+            showCauses = true
+            showStackTraces = true
+        }
+    }
     if (name == "testAndroidHostTest") {
         dependsOn(crossingVectors)
         systemProperty("crossing.vector.fixtures", crossingVectors.get().outputDirectory.dir("files/crossing").get().asFile.absolutePath)

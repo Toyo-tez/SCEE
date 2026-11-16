@@ -21,6 +21,8 @@ jobs:
   unit-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      CI: true
     steps:
       - uses: actions/checkout@v7
 
@@ -41,5 +43,31 @@ jobs:
       - name: Install xvfb for desktop Compose tests
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
-      - name: Run unit tests with Gradle
-        run: xvfb-run -a ./gradlew :app:testAndroidHostTest :app:desktopTest
+      - name: Run Android host unit tests
+        env:
+          CI_DIAG_SUITE: testAndroidHostTest
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/ci-test-with-diagnostics.sh
+          .github/scripts/ci-test-with-diagnostics.sh \
+            ./gradlew :app:testAndroidHostTest --no-parallel --console=plain
+
+      - name: Run desktop unit tests
+        env:
+          CI_DIAG_SUITE: desktopTest
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/ci-test-with-diagnostics.sh
+          xvfb-run -a .github/scripts/ci-test-with-diagnostics.sh \
+            ./gradlew :app:desktopTest --no-parallel --console=plain
+
+      - name: Upload test reports and CI diagnostics
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            app/build/reports/tests/
+            app/build/test-results/
+            build/ci-diagnostics/
