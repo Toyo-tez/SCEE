@@ -14,6 +14,7 @@ import de.westnordost.streetcomplete.data.osm.mapdata.ElementType.RELATION
 import de.westnordost.streetcomplete.data.osm.mapdata.ElementType.WAY
 import de.westnordost.streetcomplete.data.osm.mapdata.MapDataChanges
 import de.westnordost.streetcomplete.data.osm.mapdata.MapDataSource
+import de.westnordost.streetcomplete.data.osm.mapdata.MapDataWithGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.MutableMapDataWithGeometry
 import de.westnordost.streetcomplete.data.osm.mapdata.RelationMember
 import de.westnordost.streetcomplete.data.osm.mapdata.key
@@ -39,8 +40,13 @@ import dev.mokkery.verifyNoMoreCalls
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MapDataWithEditsSourceTest {
 
@@ -1352,6 +1358,180 @@ class MapDataWithEditsSourceTest {
             geometryEntries = listOf(pModified, pNew2),
         )
         verify { listener.onReplacedForBBox(bbox, expectedMapDataWithGeometry) }
+    }
+
+    @Test
+    fun `concurrent map updates during bbox replacement are replayed once after replacement`() = runBlocking {
+        val ndServer = node(1, p(0.1, 0.1), mapOf("highway" to "residential"))
+        val geom = ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1))
+        originalElementsAre(ndServer)
+        originalGeometriesAre(geom)
+        thereAreNoMapDataChanges()
+
+        val s = create()
+        val continueReplace = CompletableDeferred<Unit>()
+        val editApplied = CompletableDeferred<Unit>()
+        val replacementFinished = CompletableDeferred<Unit>()
+
+        val listener = object : MapDataWithEditsSource.Listener {
+            var updateCalls = 0
+            override fun onReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MapDataWithGeometry) {
+                launch(Dispatchers.Default) {
+                    val ndEdited = node(1, p(0.1, 0.1), mapOf("highway" to "residential", "lit" to "yes"))
+                    mapDataChangesAre(modifications = listOf(ndEdited))
+                    editsControllerNotifiesMapDataChangesAdded(modifications = listOf(ndEdited))
+                    editApplied.complete(Unit)
+                }
+                runBlocking { continueReplace.await() }
+            }
+
+            override fun onUpdated(updated: MapDataWithGeometry, deleted: Collection<ElementKey>) {
+                updateCalls++
+            }
+
+            override fun onCleared() {}
+        }
+        s.addListener(listener)
+
+        val replacementData = MutableMapDataWithGeometry(listOf(ndServer), listOf(geom))
+        launch(Dispatchers.Default) {
+            mapDataListener.onReplacedForBBox(bbox(), replacementData)
+            replacementFinished.complete(Unit)
+        }
+
+        editApplied.await()
+        assertEquals(0, listener.updateCalls)
+        continueReplace.complete(Unit)
+        replacementFinished.await()
+
+        assertEquals(1, listener.updateCalls)
+        assertEquals("yes", s.get(NODE, 1)?.tags?.get("lit"))
+    }
+
+    @Test
+    fun `bbox replacement restores listener delivery after onReplacedForBBox failure`() {
+        val nd = node(1)
+        originalElementsAre(nd)
+        originalGeometriesAre(ElementGeometryEntry(NODE, 1, pGeom()))
+        thereAreNoMapDataChanges()
+
+        val s = create()
+        val listener = mock<MapDataWithEditsSource.Listener>()
+        every { listener.onReplacedForBBox(any(), any()) } throws RuntimeException("replacement listener failed")
+        s.addListener(listener)
+
+        val data = MutableMapDataWithGeometry(listOf(nd), listOf(ElementGeometryEntry(NODE, 1, pGeom())))
+        assertFailsWith<RuntimeException> {
+            mapDataListener.onReplacedForBBox(bbox(), data)
+        }
+
+        val ndEdited = node(1, tags = mapOf("lit" to "yes"))
+        mapDataChangesAre(modifications = listOf(ndEdited))
+        editsControllerNotifiesMapDataChangesAdded(modifications = listOf(ndEdited))
+
+        verify { listener.onUpdated(any(), any()) }
+    }
+
+    @Test
+    fun `update arriving while buffered updates are replayed is delivered exactly once`() {
+        val nd = node(1, p(0.1, 0.1), mapOf("highway" to "residential"))
+        originalElementsAre(nd)
+        originalGeometriesAre(ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1)))
+        thereAreNoMapDataChanges()
+
+        val s = create()
+        val delivered = mutableListOf<String?>()
+        var editedDuringReplacement = false
+        var editedDuringReplay = false
+        fun applyEdit(value: String) {
+            val ndEdited = node(1, p(0.1, 0.1), mapOf("highway" to "residential", "lit" to value))
+            mapDataChangesAre(modifications = listOf(ndEdited))
+            editsControllerNotifiesMapDataChangesAdded(modifications = listOf(ndEdited))
+        }
+        s.addListener(object : MapDataWithEditsSource.Listener {
+            override fun onReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MapDataWithGeometry) {
+                // buffering is active: this update must be held back and replayed afterwards
+                if (!editedDuringReplacement) { editedDuringReplacement = true; applyEdit("first") }
+            }
+            override fun onUpdated(updated: MapDataWithGeometry, deleted: Collection<ElementKey>) {
+                delivered.add(updated.getNode(1)?.tags?.get("lit"))
+                // the replay is running: buffering is already off, this one is delivered directly
+                if (!editedDuringReplay) { editedDuringReplay = true; applyEdit("second") }
+            }
+            override fun onCleared() {}
+        })
+
+        mapDataListener.onReplacedForBBox(bbox(), MutableMapDataWithGeometry(listOf(nd), listOf(ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1)))))
+
+        assertEquals(listOf<String?>("first", "second"), delivered.sortedBy { it })
+        assertEquals(2, delivered.size)
+        // nothing stranded: a later update is delivered immediately and nothing old is replayed with it
+        delivered.clear()
+        applyEdit("third")
+        assertEquals(listOf<String?>("third"), delivered)
+    }
+
+    @Test
+    fun `deleted element during bbox replacement is replayed as deleted`() {
+        val nd = node(1, p(0.1, 0.1), mapOf("highway" to "residential"))
+        originalElementsAre(nd)
+        originalGeometriesAre(ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1)))
+        thereAreNoMapDataChanges()
+
+        val s = create()
+        val deletedKeys = mutableListOf<ElementKey>()
+        var done = false
+        s.addListener(object : MapDataWithEditsSource.Listener {
+            override fun onReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MapDataWithGeometry) {
+                if (done) return
+                done = true
+                mapDataChangesAre(deletions = listOf(nd))
+                editsControllerNotifiesMapDataChangesAdded(deletions = listOf(nd))
+            }
+            override fun onUpdated(updated: MapDataWithGeometry, deleted: Collection<ElementKey>) {
+                deletedKeys.addAll(deleted)
+            }
+            override fun onCleared() {}
+        })
+        mapDataListener.onReplacedForBBox(bbox(), MutableMapDataWithGeometry(listOf(nd), listOf(ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1)))))
+
+        assertEquals(listOf(nd.key), deletedKeys)
+    }
+
+    @Test
+    fun `overlapping bbox replacements are serialized`() = runBlocking {
+        val nd = node(1, p(0.1, 0.1), mapOf("highway" to "residential"))
+        originalElementsAre(nd)
+        originalGeometriesAre(ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1)))
+        thereAreNoMapDataChanges()
+
+        val s = create()
+        val firstEntered = CompletableDeferred<Unit>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        val active = java.util.concurrent.atomic.AtomicInteger(0)
+        val maxActive = java.util.concurrent.atomic.AtomicInteger(0)
+        val calls = java.util.concurrent.atomic.AtomicInteger(0)
+        s.addListener(object : MapDataWithEditsSource.Listener {
+            override fun onReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MapDataWithGeometry) {
+                maxActive.accumulateAndGet(active.incrementAndGet()) { a, b -> maxOf(a, b) }
+                if (calls.incrementAndGet() == 1) {
+                    firstEntered.complete(Unit)
+                    runBlocking { releaseFirst.await() }
+                }
+                active.decrementAndGet()
+            }
+            override fun onUpdated(updated: MapDataWithGeometry, deleted: Collection<ElementKey>) {}
+            override fun onCleared() {}
+        })
+        fun data() = MutableMapDataWithGeometry(listOf(nd), listOf(ElementGeometryEntry(NODE, 1, pGeom(0.1, 0.1))))
+        val first = launch(Dispatchers.Default) { mapDataListener.onReplacedForBBox(bbox(), data()) }
+        firstEntered.await()
+        val second = launch(Dispatchers.Default) { mapDataListener.onReplacedForBBox(bbox(), data()) }
+        // second can only enter after the first has left; release the first and join both
+        releaseFirst.complete(Unit)
+        first.join(); second.join()
+        assertEquals(2, calls.get())
+        assertEquals(1, maxActive.get())
     }
 
     // I spare myself more tests for onReplacedForBBox here because it internally does the same as

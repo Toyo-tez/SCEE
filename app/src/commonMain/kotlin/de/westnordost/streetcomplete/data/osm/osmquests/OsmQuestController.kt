@@ -82,6 +82,12 @@ class OsmQuestController(
     private var countryOverrideRefreshJob: Job? = null
     private var lastCrossingQuery: Pair<BoundingBox, List<Element>>? = null
     private val crossingDataRevision = atomic(0L)
+    // Persist ordering, separate from crossingDataRevision (which only validates crossing query caches).
+    // All guarded by [lock]. An evaluation may only persist results for elements that no evaluation
+    // started later has touched; superseded elements are covered by that later evaluation.
+    private var persistCounter = 0L
+    private var inFlightEvaluations = 0
+    private val elementPersistRevisions = HashMap<ElementKey, Long>()
     private var lastCrossingResolveKey: CrossingResolveKey? = null
     private var lastCrossingResolve: WaterwayCrossing? = null
 
@@ -93,6 +99,22 @@ class OsmQuestController(
             .map { it.name }.toHashSet()
     }
 
+    private fun beginEvaluation(touched: Collection<ElementKey> = emptyList()): Long = lock.withLock {
+        val revision = ++persistCounter
+        inFlightEvaluations++
+        touched.forEach { elementPersistRevisions[it] = revision }
+        revision
+    }
+
+    private fun endEvaluation() = lock.withLock {
+        // nothing in flight can be superseded anymore, so the bookkeeping can be dropped
+        if (--inFlightEvaluations == 0) elementPersistRevisions.clear()
+    }
+
+    /** must be called with [lock] held */
+    private fun isSuperseded(type: ElementType, id: Long, revision: Long): Boolean =
+        (elementPersistRevisions[ElementKey(type, id)] ?: 0L) > revision
+
     private val mapDataSourceListener = object : MapDataWithEditsSource.Listener {
 
         /** For the given elements, replace the current quests with the given ones. Called when
@@ -100,6 +122,15 @@ class OsmQuestController(
          *  as well. */
         override fun onUpdated(updated: MapDataWithGeometry, deleted: Collection<ElementKey>) {
             crossingDataRevision.incrementAndGet()
+            val persistRevision = beginEvaluation(updated.map { it.key } + deleted)
+            try {
+                onUpdatedEvaluated(updated, deleted, persistRevision)
+            } finally {
+                endEvaluation()
+            }
+        }
+
+        private fun onUpdatedEvaluated(updated: MapDataWithGeometry, deleted: Collection<ElementKey>, persistRevision: Long) {
             lock.withLock { clearCrossingResolveCache() }
             val time = nowAsEpochMilliseconds()
             val start = Perf.mark()
@@ -116,20 +147,25 @@ class OsmQuestController(
                 val geometry = updated.getGeometry(element.type, element.id) ?: continue
                 deferredQuests.addAll(createQuestsForElementDeferred(element, geometry, questTypes, perfStats))
             }
-            val quests = runBlocking { deferredQuests.awaitAll().filterNotNull() }
+            val allQuests = runBlocking { deferredQuests.awaitAll().filterNotNull() }
             val questEvalMs = Perf.ms(evalStart)
 
-            for (quest in quests) {
+            for (quest in allQuests) {
                 Log.d(TAG, "Created ${quest.type.name} for ${quest.elementType.name}#${quest.elementId}")
             }
 
             var obsoleteQuestKeys: List<OsmQuestKey> = listOf()
             var visibleQuests: Collection<OsmQuest> = listOf()
             var persistMs = 0L
+            var quests = allQuests
             lock.withLock {
-                val previousQuests = db.getAllForElements(updatedElementKeys).filter { it.questTypeName != crossingType?.name }
+                // elements changed again by a later update are persisted by that update
+                quests = allQuests.filterNot { isSuperseded(it.elementType, it.elementId, persistRevision) }
+                val currentKeys = updatedElementKeys.filterNot { isSuperseded(it.type, it.id, persistRevision) }
+                val currentDeleted = deleted.filterNot { isSuperseded(it.type, it.id, persistRevision) }
+                val previousQuests = db.getAllForElements(currentKeys).filter { it.questTypeName != crossingType?.name }
                 // quests that refer to elements that have been deleted shall be deleted
-                val deleteQuestKeys = db.getAllForElements(deleted).map { it.key }
+                val deleteQuestKeys = db.getAllForElements(currentDeleted).map { it.key }
 
                 val millis = nowAsEpochMilliseconds() - time
                 Log.i(TAG, "Created ${quests.size} quests for ${updated.size} updated elements in ${millis}ms")
@@ -208,14 +244,23 @@ class OsmQuestController(
          *  Called on download of a quest type for a bounding box. */
         override fun onReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MapDataWithGeometry) {
             crossingDataRevision.incrementAndGet()
-            val quests = createQuestsForBBox(bbox, mapDataWithGeometry, allQuestTypes)
+            val persistRevision = beginEvaluation()
             var obsoleteQuestKeys: List<OsmQuestKey> = listOf()
             var visibleQuests: Collection<OsmQuest> = listOf()
-            lock.withLock {
-                val previousQuests = db.getAllInBBox(bbox).filter { it.questTypeName != "AddWaterwayCrossing" || crossingResolved(it, mapDataWithGeometry) }
-                obsoleteQuestKeys = getObsoleteQuestKeys(quests, previousQuests, emptyList())
-                updateQuests(quests, obsoleteQuestKeys)
-                visibleQuests = quests.filterVisible()
+            try {
+                val allQuests = createQuestsForBBox(bbox, mapDataWithGeometry, allQuestTypes)
+                lock.withLock {
+                    // elements updated after this evaluation started are owned by that update
+                    val quests = allQuests.filterNot { isSuperseded(it.elementType, it.elementId, persistRevision) }
+                    val previousQuests = db.getAllInBBox(bbox)
+                        .filterNot { isSuperseded(it.elementType, it.elementId, persistRevision) }
+                        .filter { it.questTypeName != "AddWaterwayCrossing" || crossingResolved(it, mapDataWithGeometry) }
+                    obsoleteQuestKeys = getObsoleteQuestKeys(quests, previousQuests, emptyList())
+                    updateQuests(quests, obsoleteQuestKeys)
+                    visibleQuests = quests.filterVisible()
+                }
+            } finally {
+                endEvaluation()
             }
 
             onUpdated(added = visibleQuests, deleted = obsoleteQuestKeys)
@@ -224,6 +269,7 @@ class OsmQuestController(
         override fun onCleared() {
             crossingDataRevision.incrementAndGet()
             lock.withLock {
+                elementPersistRevisions.clear()
                 lastCrossingQuery = null
                 clearCrossingResolveCache()
                 db.clear()
@@ -730,12 +776,24 @@ class OsmQuestController(
         overrideEnabled = prefs.getBoolean(Prefs.OVERRIDE_COUNTRY_RESTRICTIONS, false),
     )
 
-    private fun refreshCountryRestrictedQuests(bbox: BoundingBox, types: List<OsmElementQuestType<*>>) {
-        val mapData = mapDataSource.getMapDataWithGeometry(bbox.enlargedBy(ApplicationConstants.QUEST_FILTER_PADDING))
-        val quests = createQuestsForBBox(bbox, mapData, types)
-        lock.withLock {
-            val previous = db.getAllInBBox(bbox, types.map { it.name })
-            updateQuests(quests, getObsoleteQuestKeys(quests, previous, emptyList()))
+    private fun refreshCountryRestrictedQuests(
+        bbox: BoundingBox,
+        types: List<OsmElementQuestType<*>>,
+    ) {
+        // Per tile: elements edited after this point are re-evaluated by their own update (with the
+        // current override setting), so only those are skipped; the rest of the tile is still refreshed.
+        val persistRevision = beginEvaluation()
+        try {
+            val mapData = mapDataSource.getMapDataWithGeometry(bbox.enlargedBy(ApplicationConstants.QUEST_FILTER_PADDING))
+            val allQuests = createQuestsForBBox(bbox, mapData, types)
+            lock.withLock {
+                val quests = allQuests.filterNot { isSuperseded(it.elementType, it.elementId, persistRevision) }
+                val previous = db.getAllInBBox(bbox, types.map { it.name })
+                    .filterNot { isSuperseded(it.elementType, it.elementId, persistRevision) }
+                updateQuests(quests, getObsoleteQuestKeys(quests, previous, emptyList()))
+            }
+        } finally {
+            endEvaluation()
         }
     }
 

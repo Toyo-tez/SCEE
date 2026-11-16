@@ -59,6 +59,7 @@ class MapDataWithEditsSourceImpl(
 
     // onReplacedForBBox may not be called in parallel
     private val onReplacedForBBoxLock = ReentrantLock()
+    private val updatesWhileReplacingBBoxLock = ReentrantLock()
     private val isReplacingForBBox: AtomicBoolean = atomic(false)
 
     private val updatesWhileReplacingBBox = MapDataWithGeometryUpdates()
@@ -150,22 +151,20 @@ class MapDataWithEditsSourceImpl(
         override fun onReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MutableMapDataWithGeometry) {
             onReplacedForBBoxLock.withLock {
                 isReplacingForBBox.value = true
+                try {
+                    lock.withLock {
+                        rebuildLocalChanges()
+                        modifyBBoxMapData(bbox, mapDataWithGeometry)
+                    }
 
-                lock.withLock {
-                    rebuildLocalChanges()
-                    modifyBBoxMapData(bbox, mapDataWithGeometry)
+                    callOnReplacedForBBox(bbox, mapDataWithGeometry)
+
+                } finally {
+                    // Always stop buffering and replay what was buffered, even if a listener threw.
+                    // Draining and clearing the flag is atomic, so no update can be buffered afterwards.
+                    val (updated, deleted) = drainBufferedUpdatesWhileReplacing()
+                    callOnUpdated(updated, deleted)
                 }
-
-                callOnReplacedForBBox(bbox, mapDataWithGeometry)
-
-                // copy data, as updatesWhileReplacingBBox can be modified after the synchronized line below
-                val updated = MutableMapDataWithGeometry(updatesWhileReplacingBBox.updated)
-                val deleted = ArrayList(updatesWhileReplacingBBox.deleted)
-                updatesWhileReplacingBBox.clear()
-
-                isReplacingForBBox.value = false
-
-                callOnUpdated(updated, deleted)
             }
         }
 
@@ -575,12 +574,22 @@ class MapDataWithEditsSourceImpl(
         if (updated.size == 0 && deleted.isEmpty()) return
         if (updated.size > 10 || deleted.size > 10) Log.i(TAG, "updated ${updated.size}, deleted ${deleted.size}")
         else Log.i(TAG, "updated: ${updated.map { it.key }}, deleted: $deleted")
-        listeners.forEach { it.onUpdated(updated, deleted) }
 
-        if (isReplacingForBBox.value) {
-            updatesWhileReplacingBBox.add(updated, deleted)
+        val buffered = updatesWhileReplacingBBoxLock.withLock {
+            if (isReplacingForBBox.value) { updatesWhileReplacingBBox.add(updated, deleted); true } else false
         }
+        if (buffered) return
+        listeners.forEach { it.onUpdated(updated, deleted) }
     }
+
+    private fun drainBufferedUpdatesWhileReplacing(): Pair<MutableMapDataWithGeometry, ArrayList<ElementKey>> =
+        updatesWhileReplacingBBoxLock.withLock {
+            val updatedCopy = MutableMapDataWithGeometry(updatesWhileReplacingBBox.updated)
+            val deletedCopy = ArrayList(updatesWhileReplacingBBox.deleted)
+            updatesWhileReplacingBBox.clear()
+            isReplacingForBBox.value = false
+            updatedCopy to deletedCopy
+        }
     private fun callOnReplacedForBBox(bbox: BoundingBox, mapDataWithGeometry: MapDataWithGeometry) {
         if (mapDataWithGeometry.size == 0) return
         listeners.forEach {
