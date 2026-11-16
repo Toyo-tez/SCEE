@@ -1,6 +1,37 @@
+
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "baseBranchPatterns": [
+    "SCEE-mc"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "* 3-6 * * 1"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "automerge": false,
+  "dependencyDashboard": true,
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "description": "Group Kotlin ecosystem updates",
+      "matchPackageNames": [
+        "/^org\\.jetbrains\\.kotlin(\\.|:)/"
+      ],
+      "groupName": "Kotlin ecosystem"
+    },
+    {
+      "description": "Keep Nucleus development builds under manual control",
+      "matchPackageNames": [
+        "/^dev\\.nucleusframework/"
+      ],
+      "enabled": false
+    }
   ]
 }
