@@ -70,7 +70,9 @@ class OsmQuestControllerConcurrencyTest {
         val countryBoundaries = object : CountryBoundaries {
             override fun isInAny(position: LatLon, countries: Countries) = true
             override fun getIds(position: LatLon) = emptyList<String>()
-            override fun intersects(bbox: de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox, countries: Countries) = true
+            override fun intersects(bbox: BoundingBox, countries: Countries) = true
+            // consistent with getIds(): no country is known to contain the whole bbox
+            override fun getContainingIds(bbox: BoundingBox): Set<String> = emptySet()
         }
         prefs = mock {
             every { getBoolean(Prefs.DYNAMIC_QUEST_CREATION, false) } returns false
@@ -166,7 +168,9 @@ class OsmQuestControllerLostUpdateTest {
         val boundaries = object : CountryBoundaries {
             override fun isInAny(position: LatLon, countries: Countries) = true
             override fun getIds(position: LatLon) = emptyList<String>()
-            override fun intersects(bbox: de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox, countries: Countries) = true
+            override fun intersects(bbox: BoundingBox, countries: Countries) = true
+            // consistent with getIds(): no country is known to contain the whole bbox
+            override fun getContainingIds(bbox: BoundingBox): Set<String> = emptySet()
         }
         val prefs: ObservableSettings = mock {
             every { getBoolean(Prefs.DYNAMIC_QUEST_CREATION, false) } returns false
@@ -292,7 +296,9 @@ class OsmQuestControllerCountryRefreshTest {
         val boundaries = object : CountryBoundaries {
             override fun isInAny(position: LatLon, countries: Countries) = true
             override fun getIds(position: LatLon) = emptyList<String>()
-            override fun intersects(bbox: de.westnordost.streetcomplete.data.osm.mapdata.BoundingBox, countries: Countries) = true
+            override fun intersects(bbox: BoundingBox, countries: Countries) = true
+            // consistent with getIds(): no country is known to contain the whole bbox
+            override fun getContainingIds(bbox: BoundingBox): Set<String> = emptySet()
         }
         val prefs: ObservableSettings = mock {
             every { getBoolean(Prefs.DYNAMIC_QUEST_CREATION, false) } returns false
