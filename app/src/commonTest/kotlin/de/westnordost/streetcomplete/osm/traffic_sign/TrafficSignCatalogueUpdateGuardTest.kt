@@ -42,11 +42,16 @@ class TrafficSignCatalogueUpdateGuardTest {
     }
 
     @Test fun `the signs of the rules file are exactly the signs of the curated rules`() {
+        // one "CC:osmValuePart" per line
         val listed = TrafficSignTestData.readText("traffic-signs-update/rule-signs.txt").lines()
-            .map { it.substringBefore('#').trim() }.filter { it.isNotEmpty() }.toSet()
-        val used = SUPPORTED_WAY_TRAFFIC_SIGNS.getValue("DE").flatten().toSet()
+            .map { it.substringBefore('#').trim() }.filter { it.isNotEmpty() }
+            .groupBy({ it.substringBefore(':') }, { it.substringAfter(':') }).mapValues { it.value.toSet() }
+        val used = SUPPORTED_WAY_TRAFFIC_SIGNS.mapValues { (_, combinations) -> combinations.flatten().toSet() }
         assertEquals(used, listed, "traffic-signs-update/rule-signs.txt must list the signs of WAY_RULES")
-        for (id in listed) assertNotNull(catalogue.getByOsmValuePart(id), id)
+        for ((country, ids) in listed) {
+            val c = TrafficSignCatalogue.parse(TrafficSignTestData.readText("$RESOURCES_DIR/files/traffic_signs/$country.json"))
+            for (id in ids) assertNotNull(c.getByOsmValuePart(id), "$country:$id")
+        }
     }
 
     /* ---------------------- a new or changed catalogue does not change the derived tags ---------------------- */

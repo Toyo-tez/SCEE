@@ -426,13 +426,13 @@ class AddTrafficSignTypeTest {
     }
 
     @Test fun `the overlay still handles its own selection of ways`() {
-        val overlay = TrafficSignOverlay(country) { bbox ->
+        val overlay = TrafficSignOverlay(country, { bbox ->
             when {
                 bbox.max.longitude < 10.0 -> setOf("DE")
                 bbox.min.longitude >= 10.0 -> setOf("PL")
                 else -> emptySet()
             }
-        }
+        }, hasCatalogue = { it == "DE" })
         val ways: Map<Element, ElementGeometry?> = mapOf(w(road, id = 1) to line(de1, de2), w(road, id = 2) to line(de1, de2, pl))
         assertEquals(listOf(1L), overlay.getStyledElements(createMapData(ways)).map { it.first.id }.toList())
     }

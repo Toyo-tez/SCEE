@@ -507,7 +507,8 @@ tasks.register<GenerateMetadataByCountryTask>("generateMetadataByCountry") {
     targetDir = projectDir.resolve("src/commonMain/composeResources/files/country_metadata")
 }
 
-// SCEE: traffic sign catalogue (currently only DE) and its signs converted to vector drawables.
+// SCEE: traffic sign catalogues of all countries of the package and their signs converted to vector
+// drawables. The countries are found in the package, there is no list of them.
 // Dry run (default): ./gradlew :app:updateTrafficSigns -PtrafficSignsVersion=latest
 // Apply:             ./gradlew :app:updateTrafficSigns -PtrafficSignsVersion=<v> -PtrafficSignsSha256=<sha> -PtrafficSignsApply=true
 // See app/traffic-signs-update/README.md
@@ -520,7 +521,6 @@ tasks.register<UpdateTrafficSignsTask>("updateTrafficSigns") {
         ?: if (requestedVersion == null || requestedVersion == trafficSignsVersion) trafficSignsSha256 else null
     apply = providers.gradleProperty("trafficSignsApply").orNull == "true"
     acceptReview = providers.gradleProperty("trafficSignsAcceptReview").orNull == "true"
-    countries = listOf("DE")
     ruleSignsFile = projectDir.resolve("traffic-signs-update/rule-signs.txt")
     converterClasspath = svgToVectorConverter
     targetDir = projectDir.resolve("src/commonMain/composeResources/files/traffic_signs")

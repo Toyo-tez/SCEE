@@ -15,6 +15,7 @@ import de.westnordost.streetcomplete.data.osm.mapdata.Way
 import de.westnordost.streetcomplete.data.overlays.Action
 import de.westnordost.streetcomplete.data.overlays.OverlayAction
 import de.westnordost.streetcomplete.osm.traffic_sign.TrafficSignWayCountry
+import de.westnordost.streetcomplete.osm.traffic_sign.isTrafficSignNodeEditable
 import de.westnordost.streetcomplete.resources.*
 import de.westnordost.streetcomplete.ui.common.overlay.OverlayForm
 import de.westnordost.streetcomplete.util.ktx.isSplittable
@@ -27,16 +28,17 @@ import org.jetbrains.compose.resources.stringResource
  * They never save anything by themselves: there is no OK button. The tag editor and splitting the
  * way are only opened when the user explicitly taps the respective button. */
 
-/** Read-only form for a way that is not completely in a country with a traffic sign editor */
+/** Read-only form for a way that is not completely in a country with a traffic sign catalogue */
 @Composable
 fun TrafficSignReadOnlyWayOverlayForm(
     on: (OverlayAction) -> Unit,
     way: Way,
     country: TrafficSignWayCountry,
+    hasCatalogue: (String) -> Boolean = { false },
 ) {
     OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
         TrafficSignReadOnlyContent(
-            explanation = readOnlyExplanation(country),
+            explanation = readOnlyExplanation(country, hasCatalogue),
             tags = readOnlyTrafficSignTags(way.tags),
             onEditTags = { on(Action.EditTags) },
             // splitting only makes sense if the way is known to lie in several countries
@@ -49,16 +51,18 @@ fun TrafficSignReadOnlyWayOverlayForm(
     }
 }
 
-/** Read-only form for a node with traffic sign tags: there is no editor for signs on nodes, in no
- *  country */
+/** Read-only form for a node with traffic sign tags that can not be edited: it is tagged per
+ *  direction, or it does not lie certainly in a country with a catalogue ([country]) */
 @Composable
 fun TrafficSignReadOnlyNodeOverlayForm(
     on: (OverlayAction) -> Unit,
     node: Node,
+    country: TrafficSignWayCountry = TrafficSignWayCountry.Uncertain(null),
+    hasCatalogue: (String) -> Boolean = { false },
 ) {
     OverlayForm(on = on, isComplete = false, hasChanges = false, onClickOk = {}) {
         TrafficSignReadOnlyContent(
-            explanation = stringResource(Res.string.traffic_sign_overlay_readonly_node),
+            explanation = stringResource(readOnlyNodeExplanation(node.tags, country, hasCatalogue)),
             tags = readOnlyTrafficSignTags(node.tags, TRAFFIC_SIGN_NODE_KEYS),
             onEditTags = { on(Action.EditTags) },
             onSplitWay = null,
@@ -109,18 +113,30 @@ internal fun TrafficSignReadOnlyContent(
 }
 
 @Composable
-private fun readOnlyExplanation(country: TrafficSignWayCountry): String = when (country) {
+private fun readOnlyExplanation(country: TrafficSignWayCountry, hasCatalogue: (String) -> Boolean): String = when (country) {
     is TrafficSignWayCountry.CrossesBorder -> stringResource(
         Res.string.traffic_sign_overlay_readonly_border,
         country.countries.sorted().joinToString(", ")
     )
     is TrafficSignWayCountry.Within -> stringResource(Res.string.traffic_sign_overlay_readonly_country)
     is TrafficSignWayCountry.Uncertain ->
-        if (country.country != null && country.country != TRAFFIC_SIGN_EDITOR_COUNTRY) {
+        if (country.country != null && !hasCatalogue(country.country)) {
             stringResource(Res.string.traffic_sign_overlay_readonly_country)
         } else {
             stringResource(Res.string.traffic_sign_overlay_readonly_uncertain)
         }
+}
+
+/** Why the signs of a node can not be edited */
+internal fun readOnlyNodeExplanation(
+    tags: Map<String, String>,
+    country: TrafficSignWayCountry,
+    hasCatalogue: (String) -> Boolean,
+): StringResource = when {
+    !isTrafficSignNodeEditable(tags) -> Res.string.traffic_sign_overlay_readonly_node
+    country is TrafficSignWayCountry.Within && !hasCatalogue(country.country) -> Res.string.traffic_sign_overlay_readonly_node_country
+    country is TrafficSignWayCountry.Uncertain && country.country != null && !hasCatalogue(country.country) -> Res.string.traffic_sign_overlay_readonly_node_country
+    else -> Res.string.traffic_sign_overlay_readonly_node_uncertain
 }
 
 /** The tags of [keys] that have a value, in the order of [keys], with their values as they are */

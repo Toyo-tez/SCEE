@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="159.28dp"
+    android:height="159.28dp"
+    android:viewportWidth="159.28"
+    android:viewportHeight="159.28">
+  <path
+      android:pathData="M79.64,79.64m-79.64,0a79.64,79.64 0,1 1,159.28 0a79.64,79.64 0,1 1,-159.28 0"
+      android:strokeLineJoin="bevel"
+      android:strokeWidth="11.7623"
+      android:fillColor="#000"/>
+  <path
+      android:pathData="M79.64,79.64m-79.38,0a79.38,79.38 0,1 1,158.75 0a79.38,79.38 0,1 1,-158.75 0"
+      android:strokeAlpha="0.643077"
+      android:strokeLineJoin="bevel"
+      android:strokeWidth="18.9205"
+      android:fillColor="#fff"/>
+  <path
+      android:pathData="M79.64,79.64m-76.73,0a76.73,76.73 0,1 1,153.46 0a76.73,76.73 0,1 1,-153.46 0"
+      android:strokeAlpha="0.643077"
+      android:strokeLineJoin="bevel"
+      android:strokeWidth="18.2898"
+      android:fillColor="#d40000"/>
+  <path
+      android:pathData="M79.64,79.64m-56.88,0a56.88,56.88 0,1 1,113.77 0a56.88,56.88 0,1 1,-113.77 0"
+      android:strokeLineJoin="bevel"
+      android:strokeWidth="10.8171"
+      android:fillColor="#fff"/>
+  <path
+      android:pathData="M79.64,79.64m-52.92,0a52.92,52.92 0,1 1,105.83 0a52.92,52.92 0,1 1,-105.83 0"
+      android:strokeLineJoin="bevel"
+      android:strokeWidth="12.9094"
+      android:fillColor="#00408b"/>
+  <path
+      android:pathData="M49,35.44l-13.56,13.56l74.84,74.84l13.56,-13.56z"
+      android:strokeLineJoin="bevel"
+      android:fillColor="#fff"/>
+  <path
+      android:pathData="M43.02,35.06l-7.95,7.95l81.2,81.2l7.95,-7.95z"
+      android:strokeLineJoin="bevel"
+      android:fillColor="#d40000"/>
+</vector>

@@ -43,9 +43,10 @@ import de.westnordost.streetcomplete.ui.common.dialogs.ScrollableAlertDialog
 import de.westnordost.streetcomplete.ui.common.traffic_sign.TrafficSignPartImage
 import org.jetbrains.compose.resources.stringResource
 
-/** Dialog to pick one sign from the catalogue: search, categories, and a way to enter a sign that
- *  is not in the list. If [main] is set, additional signs are picked for it: by default only the
- *  ones that fit to it, but all can be shown. */
+/** Dialog to pick one sign from the catalogue: search, categories, and (if [allowCustomSigns]) a way
+ *  to enter a sign that is not in the list. Only the selectable signs of the catalogue are offered
+ *  (see TrafficSignCatalogue.selectableSigns). If [main] is set, additional signs are picked for it:
+ *  by default only the ones that fit to it, but all can be shown. */
 @Composable
 fun TrafficSignCatalogueDialog(
     catalogue: TrafficSignCatalogue,
@@ -53,6 +54,7 @@ fun TrafficSignCatalogueDialog(
     main: TrafficSign?,
     onDismiss: () -> Unit,
     onPick: (TrafficSignPart) -> Unit,
+    allowCustomSigns: Boolean = true,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var category by rememberSaveable { mutableStateOf<String?>(null) }
@@ -133,14 +135,14 @@ fun TrafficSignCatalogueDialog(
                     }
                 }
                 // the manual input is folded away until it is needed
-                TextButton(onClick = { showCustom = !showCustom }) {
+                if (allowCustomSigns) TextButton(onClick = { showCustom = !showCustom }) {
                     Text(
                         stringResource(Res.string.traffic_sign_overlay_custom_sign),
                         style = MaterialTheme.typography.body2,
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                if (showCustom) {
+                if (allowCustomSigns && showCustom) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         OutlinedTextField(
                             value = customText,

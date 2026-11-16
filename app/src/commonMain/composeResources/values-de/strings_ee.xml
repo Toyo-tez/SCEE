@@ -718,7 +718,12 @@
     <string name="traffic_sign_overlay_readonly_no_tags">Es gibt keine Verkehrszeichen-Tags.</string>
     <string name="traffic_sign_overlay_readonly_no_direction">Allgemein (Schlüssel ohne Richtung)</string>
     <string name="traffic_sign_overlay_readonly_direction_tag">Richtungsangabe, wie getaggt</string>
-    <string name="traffic_sign_overlay_readonly_node">Verkehrszeichen an Punkten werden hier nur angezeigt und können in diesem Overlay nicht bearbeitet werden. Ihre Tags werden so angezeigt, wie sie sind.</string>
+    <string name="traffic_sign_overlay_readonly_node">Die Verkehrszeichen dieses Punktes sind pro Richtung getaggt (traffic_sign:forward oder traffic_sign:backward). Sie werden hier nur angezeigt, so wie sie sind.</string>
+    <string name="traffic_sign_overlay_readonly_node_country">Für das Land dieses Punktes gibt es keinen Verkehrszeichenkatalog. Seine Verkehrszeichen-Tags werden nur so angezeigt, wie sie sind.</string>
+    <string name="traffic_sign_overlay_readonly_node_uncertain">Es lässt sich nicht sicher feststellen, in welchem Land dieser Punkt liegt, zum Beispiel weil er nahe an einer Grenze liegt. Seine Verkehrszeichen können deshalb hier nicht bearbeitet werden.</string>
+    <string name="traffic_sign_overlay_node_hint">Es wird nur traffic_sign dieses Punktes geändert. Seine Richtung und alle anderen Tags bleiben, wie sie sind, und es wird nichts auf die Straße übertragen.</string>
+    <string name="traffic_sign_overlay_node_confirm_replace">traffic_sign=%1$s durch traffic_sign=%2$s ersetzen?</string>
+    <string name="traffic_sign_overlay_signs_only">Für dieses Land werden nur die Verkehrszeichen erfasst. Es werden keine weiteren Tags daraus abgeleitet.</string>
     <string name="traffic_sign_overlay_catalogue_missing">Der Verkehrszeichenkatalog konnte nicht geladen werden.</string>
     <string name="traffic_sign_overlay_loading">Verkehrszeichen werden geladen…</string>
     <string name="traffic_sign_overlay_direction_forward">Richtung des Weges</string>

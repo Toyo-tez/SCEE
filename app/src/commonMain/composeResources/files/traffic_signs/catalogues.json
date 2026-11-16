@@ -1,0 +1,1760 @@
+{
+    "package": "@osm-traffic-signs/converter@0.8.0",
+    "countries": [
+        {
+            "country": "AT",
+            "catalogueSigns": 169,
+            "importedSigns": 151,
+            "skippedSigns": 15,
+            "erroneousSigns": 3,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "13a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "13b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "13c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "13d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "14b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "17b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "54[Tafeltext]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "54n-1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "54n-2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "9b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "9d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "9f",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "FKV_1.2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "FKV_1.3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "FKV_1.8",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "WVO_F.3.2",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "WVO_F.4.1",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "WVO_F.4.2",
+                    "reason": "defective_image"
+                }
+            ]
+        },
+        {
+            "country": "AU",
+            "catalogueSigns": 652,
+            "importedSigns": 626,
+            "skippedSigns": 20,
+            "erroneousSigns": 6,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "Australian_pedestrian_signal_countdown",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_pedestrian_signal_countdown_w",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_pedestrian_signal_flashing_re",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_pedestrian_signal_green",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_pedestrian_signal_red",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_bicycles",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_bus",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_emergency_vehi",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_give_way_to_pe",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_left_turn",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_right_turn",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_standard_with_",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_standard_with___2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Australian_traffic_signal_tram",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "G2-5",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "G3-3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "G4-1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "G6-329-1-NSW",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "G6-329-3-NSW",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "G9-11",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "R1-1",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "R1-4-N",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "R6-249",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "W5-31",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "frameless_120px",
+                    "reason": "no_image"
+                }
+            ]
+        },
+        {
+            "country": "BE",
+            "catalogueSigns": 231,
+            "importedSigns": 211,
+            "skippedSigns": 16,
+            "erroneousSigns": 4,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "(",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "B1+M1",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "B1+M8",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "B5+M1",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "B5+M8",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "C11 + C9",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "C47",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "C5 + C7",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "C5 + C7 + C9",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "D4",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "F119",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "F120",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "F17",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "F34a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "F51b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "F99c",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "M21",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M22",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M23",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M24",
+                    "reason": "no_image"
+                }
+            ]
+        },
+        {
+            "country": "BR",
+            "catalogueSigns": 123,
+            "importedSigns": 116,
+            "skippedSigns": 7,
+            "erroneousSigns": 0,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "A-49a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A-49b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A-50a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A-50b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Correio_transito",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "Correios",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "R-19__2",
+                    "reason": "no_image"
+                }
+            ]
+        },
+        {
+            "country": "CA",
+            "catalogueSigns": 145,
+            "importedSigns": 144,
+            "skippedSigns": 1,
+            "erroneousSigns": 0,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "Wa-38",
+                    "reason": "no_image"
+                }
+            ]
+        },
+        {
+            "country": "DE",
+            "catalogueSigns": 290,
+            "importedSigns": 290,
+            "skippedSigns": 0,
+            "erroneousSigns": 0,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": []
+        },
+        {
+            "country": "FR",
+            "catalogueSigns": 658,
+            "importedSigns": 331,
+            "skippedSigns": 327,
+            "erroneousSigns": 0,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "A15a2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A1b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A1d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A2b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A3b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "A4+M9z",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "A9a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AB3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AB3b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AB5",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK14",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK17",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK22",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK30",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK31",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK32",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK3a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK3b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "AK5",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[100]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[10]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[110]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[130]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[15]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[20]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[30]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[40]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[45]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[5]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[60]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[70]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[80]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B14[90]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B22a+B22b",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "B25[30]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B30",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B33",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B33[110]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B33[30]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B33[70]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B34a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B35",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B39",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B40",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B41",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B42",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B43",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B43[30]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B44",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B45",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B49",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B50a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B50b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B50c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B50d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B50e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B56",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B57",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B58",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B59",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B6b1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B6b2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B6b3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B6b4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "B6b5",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C108",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C110",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C112",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C114",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C117-B21b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C117-B21c1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C117-B21c2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C117-B21d1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C117-B21d2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C117-B21e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C13b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C13c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C13d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C14",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C1a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C1b-ancien",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C208",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C20b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C20c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C23",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24a-1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24a-2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24a-3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24a-4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24b-2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C24c-2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C25a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C25b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C26a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C26c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C28-2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C28-3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C29a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C29b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C29c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C30",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C4a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C4a[50]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C4b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C4b[50]",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C50",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C51a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C51b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C60",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C61",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C62",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C63",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C64b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C64c1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C64c2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C64d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C65a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "C9",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE100",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE15e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE15f",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE15g",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE15h",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE15i",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE15j",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE19",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE22",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE27",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE28",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE29",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE30a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE30b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE3b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE50",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE51",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "CE9",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E31",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E32",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E33a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E33b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E34a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E34b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E34c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E34d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E36a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E36b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E37a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E37b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E38",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E41",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E42",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E43",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E44",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E45",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E46",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E47",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E51",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E52a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E52b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E52c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E53a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E53b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E53c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E54a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E54b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E54c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E57a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E57b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E57c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "E60",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "EB10",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "EB20",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "ID23",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J1 bis",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J10",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J10-1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J10-2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J10-3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J11",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J12",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J13",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J14",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J14a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J14b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J15",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J15a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J15b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J16",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J17",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J4A",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J4B",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J5",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J6",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "J7",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "K8",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "K8e1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "K8e2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "K8e3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "K8e4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KC1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10a1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10a2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10a3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10b1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10b2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10e1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10e2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10e3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD10e4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD21",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD21a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD21b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD22",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD22a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD22a1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD22a2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD22b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD42",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD43",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD62",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD69",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD79",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8e1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8e2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8e3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8e4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8e5",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD8e6",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD9",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD9e1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD9e2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD9e3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KD9e4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KM1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KM2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KM9",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "KS1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M10c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M10c1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M10c2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M10c3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M10z",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M11a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M11b1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M11b2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M11c1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M11c2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M11d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M12",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M12D",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M12F",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M12FD",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M12G",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M12GFD",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M1a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3b1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3b2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3b3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M3b4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4h",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4j",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4q",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4r",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4u",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4v",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M4z",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6f",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6g",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6h",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6i",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6j",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6k1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M6k2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M7",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M8a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M8b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M8c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M8d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M8e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M8f",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9f",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9j1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9j2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9k1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9k2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9l",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9v1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9v2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9v3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "M9v4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR2a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR2b",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR2c",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR3a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR3c1",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR3c2",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR3c3",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR3d",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR3e",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR4",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR50",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR52a",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "SR52b",
+                    "reason": "no_image"
+                }
+            ]
+        },
+        {
+            "country": "IT",
+            "catalogueSigns": 303,
+            "importedSigns": 293,
+            "skippedSigns": 3,
+            "erroneousSigns": 7,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "II.250",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "II.37",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "II.370",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "II.79",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "II.96",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "II.99",
+                    "reason": "no_image"
+                },
+                {
+                    "osmValuePart": "MII.3d",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "MII.4a",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "MII.4b",
+                    "reason": "defective_image"
+                },
+                {
+                    "osmValuePart": "MII.6l",
+                    "reason": "defective_image"
+                }
+            ]
+        },
+        {
+            "country": "PL",
+            "catalogueSigns": 215,
+            "importedSigns": 212,
+            "skippedSigns": 3,
+            "erroneousSigns": 0,
+            "imageLicences": [
+                "Public Domain"
+            ],
+            "excluded": [
+                {
+                    "osmValuePart": "A-3,T-5",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "A-4,T-5",
+                    "reason": "unsupported_id"
+                },
+                {
+                    "osmValuePart": "B-9,T-22",
+                    "reason": "unsupported_id"
+                }
+            ]
+        }
+    ]
+}

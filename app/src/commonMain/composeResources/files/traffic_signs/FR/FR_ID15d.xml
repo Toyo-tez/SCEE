@@ -1,0 +1,40 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="15001dp"
+    android:height="14996dp"
+    android:viewportWidth="15001"
+    android:viewportHeight="14996">
+  <group>
+    <clip-path
+        android:pathData="M-2652,-5770h21001v29703h-21001z"/>
+    <path
+        android:pathData="M1,0v14995h14999L15000,0Z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillColor="#fefefe"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="M503,501v13991h13996L14499,501Z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillColor="#826500"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="M1501,1499v11995h12000L13501,1499Z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillColor="#fefefe"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="m5815,8577 l-2313,-71c364,-511 5,-691 -685,-930 1028,-127 -130,-963 -640,-1270 594,53 2019,61 1262,-648 698,214 1092,280 1100,-350l1934,1318 -658,-2254c599,188 660,-208 673,-940 439,940 876,-419 1011,-1000 132,581 569,1940 1008,1000 13,732 74,1128 673,940l-655,2254 1934,-1321c8,628 401,564 1102,351 -759,706 668,703 1265,650 -513,307 -1674,1143 -642,1273 -694,238 -1052,416 -689,929l-2315,69 1830,1425c-594,199 -414,557 8,1154 -911,-501 -463,856 -231,1404 -447,-391 -1604,-1231 -1406,-213 -442,-584 -721,-869 -1097,-366l-783,-2188 -790,2186c-376,-503 -657,-221 -1099,366 198,-1019 -956,-176 -1406,215 234,-548 679,-1902 -231,-1402 421,-599 604,-955 10,-1154z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillColor="#826500"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="M7499,7024h-1c178,0 351,47 505,135 153,89 280,216 369,369 88,154 135,327 135,504v1c0,177 -47,350 -135,504 -89,153 -216,280 -369,369 -154,88 -327,135 -504,135 -178,0 -351,-47 -505,-135 -153,-89 -280,-216 -369,-369 -88,-154 -135,-327 -135,-504 0,-178 47,-351 135,-505 89,-153 216,-280 369,-369 154,-88 327,-135 504,-135z"
+        android:strokeLineJoin="round"
+        android:strokeWidth="28.222"
+        android:fillColor="#fefefe"
+        android:fillType="evenOdd"/>
+  </group>
+</vector>

@@ -33,6 +33,9 @@ fun overlaysRegistry(
     /** ids of the countries (and subdivisions) that are guaranteed to contain the whole bounding box.
      *  Without it, no way can be shown to lie completely in one country (see TrafficSignOverlay) */
     getContainingCountryCodes: (BoundingBox) -> Set<String> = { emptySet() },
+    /** whether there is a traffic sign catalogue for the given country (see TrafficSignCatalogues).
+     *  Without it, traffic signs are only shown, not edited */
+    hasTrafficSignCatalogue: (String) -> Boolean = { false },
 ) = OverlayRegistry(listOf(
 
     /* Each overlay is assigned an ordinal. This is used for serialization and is thus never
@@ -52,5 +55,5 @@ fun overlaysRegistry(
     9 to MtbScaleOverlay(),
     (EE_QUEST_OFFSET + 1) to RestrictionOverlay(),
     (EE_QUEST_OFFSET + 0) to CustomOverlay(prefs),
-    (EE_QUEST_OFFSET + 2) to TrafficSignOverlay(getCountryCodeByLocation, getContainingCountryCodes),
+    (EE_QUEST_OFFSET + 2) to TrafficSignOverlay(getCountryCodeByLocation, getContainingCountryCodes, hasTrafficSignCatalogue),
 ))

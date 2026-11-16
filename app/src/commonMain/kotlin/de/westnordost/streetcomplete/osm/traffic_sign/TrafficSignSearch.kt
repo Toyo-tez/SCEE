@@ -35,7 +35,8 @@ fun TrafficSignCatalogue.search(
     showAll: Boolean = false,
 ): List<TrafficSign> {
     val q = query.trim().lowercase()
-    val candidates = signs.withIndex().filter { (_, sign) ->
+    // only signs that are written and read back as exactly themselves are offered
+    val candidates = selectableSigns.withIndex().filter { (_, sign) ->
         (sign.isModifier == (kind == TrafficSignPickerKind.MODIFIER)) &&
             (category == null || sign.category == category) &&
             (kind == TrafficSignPickerKind.MAIN || showAll || sign.isCompatibleModifierOf(main))
@@ -52,7 +53,7 @@ fun TrafficSignCatalogue.search(
 
 /** categories that occur among the signs of the given kind, in catalogue order */
 fun TrafficSignCatalogue.categories(kind: TrafficSignPickerKind): List<String> =
-    signs.filter { it.isModifier == (kind == TrafficSignPickerKind.MODIFIER) }
+    selectableSigns.filter { it.isModifier == (kind == TrafficSignPickerKind.MODIFIER) }
         .map { it.category }.distinct()
 
 private fun rank(sign: TrafficSign, q: String): Int? {

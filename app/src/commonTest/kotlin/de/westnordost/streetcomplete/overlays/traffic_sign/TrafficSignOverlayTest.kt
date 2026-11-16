@@ -118,9 +118,11 @@ class TrafficSignOverlayTest {
 
     /* ---------------------------------- element selection ---------------------------------- */
 
+    // only DE has a catalogue here: the other countries stand for countries without one
     private val overlay = TrafficSignOverlay(
         TrafficSignTestCountries.getCountryCode,
         TrafficSignTestCountries.getContainingCountryCodes,
+        hasCatalogue = { it == "DE" },
     )
 
     private fun styledWithStyle(vararg ways: Pair<Way, ElementPolylinesGeometry?>): Map<Long, OverlayStyle> =
@@ -265,13 +267,19 @@ class TrafficSignOverlayTest {
     }
 
     @Test fun `only ways completely in Germany are editable`() {
-        assertTrue(isEditable(TrafficSignWayCountry.Within("DE")))
-        assertFalse(isEditable(TrafficSignWayCountry.Within("FR")))
-        assertFalse(isEditable(TrafficSignWayCountry.Within("GB")))
-        assertFalse(isEditable(TrafficSignWayCountry.Within("AT")))
-        assertFalse(isEditable(TrafficSignWayCountry.CrossesBorder(setOf("DE", "AT"))))
-        assertFalse(isEditable(TrafficSignWayCountry.Uncertain("DE")))
-        assertFalse(isEditable(TrafficSignWayCountry.Uncertain(null)))
+        val onlyDE = { c: String -> c == "DE" }
+        assertTrue(isEditable(TrafficSignWayCountry.Within("DE"), onlyDE))
+        assertFalse(isEditable(TrafficSignWayCountry.Within("FR"), onlyDE))
+        assertFalse(isEditable(TrafficSignWayCountry.Within("GB"), onlyDE))
+        assertFalse(isEditable(TrafficSignWayCountry.Within("AT"), onlyDE))
+        assertFalse(isEditable(TrafficSignWayCountry.CrossesBorder(setOf("DE", "AT")), onlyDE))
+        assertFalse(isEditable(TrafficSignWayCountry.Uncertain("DE"), onlyDE))
+        assertFalse(isEditable(TrafficSignWayCountry.Uncertain(null), onlyDE))
+        // any country with a catalogue
+        val withFR = { c: String -> c == "DE" || c == "FR" }
+        assertTrue(isEditable(TrafficSignWayCountry.Within("FR"), withFR))
+        assertFalse(isEditable(TrafficSignWayCountry.CrossesBorder(setOf("DE", "FR")), withFR))
+        assertFalse(isEditable(TrafficSignWayCountry.Uncertain("FR"), withFR))
     }
 
     @Test fun `styling does not change the tags of the ways`() {
@@ -447,6 +455,7 @@ class TrafficSignOverlayTest {
             getFeature = { null },
             prefs = Prefs.preferences,
             getContainingCountryCodes = TrafficSignTestCountries.getContainingCountryCodes,
+            hasTrafficSignCatalogue = { it == "DE" },
         )
         val controller = SelectedOverlayController(Prefs.preferences, registry)
         val trafficSignOverlay = registry.first { it is TrafficSignOverlay }
@@ -478,6 +487,7 @@ class TrafficSignOverlayTest {
             getCountryCodeByLocation = TrafficSignTestCountries.getCountryCode,
             getFeature = { null },
             prefs = inMemoryPrefs(),
+            hasTrafficSignCatalogue = { it == "DE" },
         )
         val o = registry.first { it is TrafficSignOverlay }
         val data = createMapData(mapOf(
