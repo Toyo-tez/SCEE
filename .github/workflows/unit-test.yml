@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           chmod +x .github/scripts/ci-test-with-diagnostics.sh
           .github/scripts/ci-test-with-diagnostics.sh \
-            ./gradlew :app:testAndroidHostTest --no-parallel --console=plain --rerun-tasks
+            ./gradlew :app:testAndroidHostTest --no-parallel --console=plain --no-build-cache
 
       - name: Run desktop unit tests
         env:
@@ -59,7 +59,7 @@ jobs:
           set -euo pipefail
           chmod +x .github/scripts/ci-test-with-diagnostics.sh
           xvfb-run -a .github/scripts/ci-test-with-diagnostics.sh \
-            ./gradlew :app:desktopTest --no-parallel --console=plain --rerun-tasks
+            ./gradlew :app:desktopTest --no-parallel --console=plain --no-build-cache
 
       - name: Upload test reports and CI diagnostics
         if: failure() || cancelled()
